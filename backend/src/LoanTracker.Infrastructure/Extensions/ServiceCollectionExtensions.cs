@@ -31,6 +31,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ILoanService, LoanService>();
         services.AddScoped<IPaymentService, PaymentService>();
         services.AddScoped<IDashboardService, DashboardService>();
+        services.AddSingleton<IPasswordHasher, PasswordHasher>();
+        services.AddScoped<IAuthService, AuthService>();
 
         return services;
     }

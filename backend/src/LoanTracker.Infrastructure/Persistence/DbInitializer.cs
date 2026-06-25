@@ -1,3 +1,4 @@
+using LoanTracker.Application.Interfaces;
 using LoanTracker.Domain.Entities;
 using LoanTracker.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -7,6 +8,26 @@ namespace LoanTracker.Infrastructure.Persistence;
 
 public static class DbInitializer
 {
+    /// <summary>
+    /// Seeds a default admin user (admin / admin123) when no users exist.
+    /// Runs on every startup; safe and idempotent.
+    /// </summary>
+    public static async Task SeedAdminUserAsync(
+        ApplicationDbContext db, IPasswordHasher passwordHasher, ILogger logger, CancellationToken ct = default)
+    {
+        if (await db.Users.IgnoreQueryFilters().AnyAsync(ct)) return;
+
+        db.Users.Add(new User
+        {
+            Username = "admin",
+            PasswordHash = passwordHasher.Hash("admin123"),
+            DisplayName = "Administrator",
+            IsActive = true
+        });
+        await db.SaveChangesAsync(ct);
+        logger.LogWarning("Seeded default admin user (admin / admin123) — change this password after first login.");
+    }
+
     /// <summary>
     /// Seeds sample data (2 person lenders, 2 bank lenders, 4 loans, multiple payments)
     /// only when the database has no lenders yet. Safe to call on every startup.

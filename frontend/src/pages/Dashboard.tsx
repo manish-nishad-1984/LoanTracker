@@ -11,6 +11,8 @@ import {
   AlertCircle,
   Percent,
   Clock,
+  ArrowDownCircle,
+  Scale,
 } from 'lucide-react'
 import SummaryCard from '@/components/common/SummaryCard'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -128,6 +130,31 @@ export default function Dashboard() {
           icon={Clock}
           iconColor="text-red-600"
           description="Accrued minus paid (pending)"
+        />
+      </div>
+
+      {/* Direction Row — I owe vs owed to me */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+        <SummaryCard
+          title="I Owe (Borrowed)"
+          value={data.borrowedOutstanding}
+          icon={ArrowDownCircle}
+          iconColor="text-orange-600"
+          description={`${data.borrowedLoans} borrowed loan${data.borrowedLoans === 1 ? '' : 's'} outstanding`}
+        />
+        <SummaryCard
+          title="Owed to Me (Lent)"
+          value={data.lentOutstanding}
+          icon={ArrowUpCircle}
+          iconColor="text-blue-600"
+          description={`${data.lentLoans} lent loan${data.lentLoans === 1 ? '' : 's'} outstanding`}
+        />
+        <SummaryCard
+          title="Net Position"
+          value={data.netPosition}
+          icon={Scale}
+          iconColor={data.netPosition >= 0 ? 'text-emerald-600' : 'text-red-600'}
+          description={data.netPosition >= 0 ? 'Net owed to you' : 'Net you owe'}
         />
       </div>
 

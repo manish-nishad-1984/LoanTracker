@@ -1,11 +1,17 @@
+using System.Text;
 using FluentValidation;
 using LoanTracker.Api.Middleware;
+using LoanTracker.Application.DTOs.Auth;
 using LoanTracker.Application.DTOs.Lenders;
 using LoanTracker.Application.DTOs.Loans;
 using LoanTracker.Application.DTOs.Payments;
+using LoanTracker.Application.Interfaces;
 using LoanTracker.Infrastructure.Extensions;
 using LoanTracker.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -45,6 +51,35 @@ builder.Services.AddScoped<IValidator<UpdateLoanRequest>, UpdateLoanValidator>()
 builder.Services.AddScoped<IValidator<UpdateInterestRateRequest>, UpdateInterestRateValidator>();
 builder.Services.AddScoped<IValidator<CreatePaymentRequest>, CreatePaymentValidator>();
 builder.Services.AddScoped<IValidator<UpdatePaymentRequest>, UpdatePaymentValidator>();
+builder.Services.AddScoped<IValidator<LoginRequest>, LoginValidator>();
+builder.Services.AddScoped<IValidator<ChangePasswordRequest>, ChangePasswordValidator>();
+
+// ── JWT authentication ───────────────────────────────────────
+var jwtKey = builder.Configuration["Jwt:Key"]
+    ?? throw new InvalidOperationException("Jwt:Key is not configured.");
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "LoanTracker",
+            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "LoanTracker",
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            ClockSkew = TimeSpan.FromMinutes(1)
+        };
+    });
+
+// Require authentication globally; endpoints opt out with [AllowAnonymous].
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
 
 // CORS — allow React dev server + production origins.
 // Extra origins can be supplied via the Cors__AllowedOrigins config array / env.
@@ -81,6 +116,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors();
 app.UseSerilogRequestLogging();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
@@ -93,12 +129,14 @@ using (var scope = app.Services.CreateScope())
         await db.Database.MigrateAsync();
         Log.Information("Database migration completed.");
 
-        // Sample-data seeding disabled — the app now holds real user data.
-        // To re-enable demo seeding on an empty database, uncomment below:
-        // var seedLogger = scope.ServiceProvider
-        //     .GetRequiredService<ILoggerFactory>()
-        //     .CreateLogger("DbInitializer");
-        // await DbInitializer.SeedAsync(db, seedLogger);
+        // Seed the default admin user if no users exist (admin / admin123).
+        var seedLogger = scope.ServiceProvider
+            .GetRequiredService<ILoggerFactory>()
+            .CreateLogger("DbInitializer");
+        var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+        await DbInitializer.SeedAdminUserAsync(db, hasher, seedLogger);
+
+        // Sample loan/lender seeding stays disabled — app holds real data.
     }
     catch (Exception ex)
     {

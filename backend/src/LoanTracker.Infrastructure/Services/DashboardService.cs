@@ -61,6 +61,16 @@ public class DashboardService(IApplicationDbContext db) : IDashboardService
             LoanService.ComputeAccruedInterest(l, l.Payments.Where(p => !p.IsDeleted).ToList()));
         var totalInterestOutstanding = Math.Max(0m, totalInterestAccrued - totalInterestPaid);
 
+        // Direction split: Borrowed = money I owe, Lent = money owed to me.
+        decimal Outstanding(Domain.Entities.Loan l) =>
+            l.PrincipalAmount - l.Payments.Where(p => !p.IsDeleted).Sum(p => p.PrincipalAmount);
+
+        var borrowedLoans = allLoans.Where(l => l.Direction == Domain.Enums.LoanDirection.Borrowed).ToList();
+        var lentLoans = allLoans.Where(l => l.Direction == Domain.Enums.LoanDirection.Lent).ToList();
+        var borrowedOutstanding = borrowedLoans.Sum(Outstanding);
+        var lentOutstanding = lentLoans.Sum(Outstanding);
+        var netPosition = lentOutstanding - borrowedOutstanding;
+
         return new DashboardSummaryDto(
             TotalBorrowed: totalBorrowed,
             TotalOutstanding: totalBorrowed - totalPrincipalPaid,
@@ -70,6 +80,11 @@ public class DashboardService(IApplicationDbContext db) : IDashboardService
             TotalInterestOutstanding: totalInterestOutstanding,
             TotalPenaltyPaid: paymentStats?.TotalPenaltyPaid ?? 0,
             TotalAmountPaid: paymentStats?.TotalAmountPaid ?? 0,
+            BorrowedOutstanding: borrowedOutstanding,
+            LentOutstanding: lentOutstanding,
+            NetPosition: netPosition,
+            BorrowedLoans: borrowedLoans.Count,
+            LentLoans: lentLoans.Count,
             TotalLoans: loanStats?.TotalLoans ?? 0,
             ActiveLoans: loanStats?.ActiveLoans ?? 0,
             ClosedLoans: loanStats?.ClosedLoans ?? 0,

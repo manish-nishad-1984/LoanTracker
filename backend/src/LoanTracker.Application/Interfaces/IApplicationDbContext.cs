@@ -10,6 +10,7 @@ public interface IApplicationDbContext
     DbSet<LoanPayment> LoanPayments { get; }
     DbSet<LoanInterestRateHistory> LoanInterestRateHistories { get; }
     DbSet<LoanDocument> LoanDocuments { get; }
+    DbSet<User> Users { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

@@ -9,6 +9,12 @@ public record DashboardSummaryDto(
     decimal TotalInterestOutstanding,
     decimal TotalPenaltyPaid,
     decimal TotalAmountPaid,
+    // Direction split (Borrowed = I owe, Lent = owed to me)
+    decimal BorrowedOutstanding,
+    decimal LentOutstanding,
+    decimal NetPosition,
+    int BorrowedLoans,
+    int LentLoans,
     int TotalLoans,
     int ActiveLoans,
     int ClosedLoans,

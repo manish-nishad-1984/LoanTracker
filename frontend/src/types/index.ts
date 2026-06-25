@@ -261,6 +261,11 @@ export interface DashboardSummaryDto {
   totalInterestOutstanding: number
   totalPenaltyPaid: number
   totalAmountPaid: number
+  borrowedOutstanding: number
+  lentOutstanding: number
+  netPosition: number
+  borrowedLoans: number
+  lentLoans: number
   totalLoans: number
   activeLoans: number
   closedLoans: number

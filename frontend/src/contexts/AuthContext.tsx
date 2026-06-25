@@ -1,22 +1,18 @@
 import { createContext, useContext, useState, type ReactNode } from 'react'
+import { authApi } from '@/api/auth'
+import { TOKEN_KEY } from '@/lib/api'
 
 /**
- * Frontend-only auth gate (placeholder).
- *
- * The backend currently has no authentication (it was kept optional by design).
- * This context guards the UI with a local credential and persists a flag in
- * localStorage. When a real auth API is added, replace `login()` with a call to
- * POST /api/auth/login and store the returned JWT instead of this boolean.
+ * Real authentication backed by the API (JWT).
+ * The token is stored in localStorage and attached to requests by the axios
+ * interceptor in lib/api.ts. A 401 from the API clears the session.
  */
 
-// Demo credential — change here, or wire to a real backend later.
-const DEMO_USERNAME = 'admin'
-const DEMO_PASSWORD = 'admin123'
-
-const STORAGE_KEY = 'loantracker.auth'
+const USER_KEY = 'loantracker.user'
 
 interface AuthUser {
   username: string
+  displayName: string | null
 }
 
 interface AuthContextValue {
@@ -30,8 +26,9 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 function readStoredUser(): AuthUser | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? (JSON.parse(raw) as AuthUser) : null
+    const token = localStorage.getItem(TOKEN_KEY)
+    const raw = localStorage.getItem(USER_KEY)
+    return token && raw ? (JSON.parse(raw) as AuthUser) : null
   } catch {
     return null
   }
@@ -41,20 +38,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(readStoredUser)
 
   const login: AuthContextValue['login'] = async (username, password) => {
-    // Simulate async so swapping in a real fetch later is trivial.
-    await new Promise((r) => setTimeout(r, 300))
-
-    if (username.trim() === DEMO_USERNAME && password === DEMO_PASSWORD) {
-      const authUser: AuthUser = { username: username.trim() }
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(authUser))
+    try {
+      const res = await authApi.login(username, password)
+      const authUser: AuthUser = { username: res.username, displayName: res.displayName }
+      localStorage.setItem(TOKEN_KEY, res.token)
+      localStorage.setItem(USER_KEY, JSON.stringify(authUser))
       setUser(authUser)
       return { ok: true }
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : 'Login failed.' }
     }
-    return { ok: false, error: 'Invalid username or password.' }
   }
 
   const logout = () => {
-    localStorage.removeItem(STORAGE_KEY)
+    localStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem(USER_KEY)
     setUser(null)
   }
 
