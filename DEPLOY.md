@@ -48,11 +48,12 @@ ufw --force enable
 
 ```bash
 cd /opt
-git clone https://github.com/<your-username>/<your-repo>.git loantracker
+git clone https://github.com/manish-nishad-1984/LoanTracker.git loantracker
 cd loantracker
 ```
-(For a private repo, use a GitHub Personal Access Token as the password when prompted,
-or set up a deploy key.)
+If the repo is **private**, the clone will ask for a username + password — use your
+GitHub username and a **Personal Access Token** (with `repo` scope) as the password.
+If the repo is public, it clones with no prompt.
 
 ## 5. Create the production `.env`
 
