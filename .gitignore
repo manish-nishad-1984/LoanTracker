@@ -37,3 +37,6 @@ AGENT.md
 
 # TypeScript build info
 *.tsbuildinfo
+
+# Local deploy build output
+.deploy/
