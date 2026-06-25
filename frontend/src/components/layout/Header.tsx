@@ -30,9 +30,17 @@ export default function Header() {
           <Bell className="h-4 w-4" />
         </Button>
         {user && (
-          <div className="flex items-center gap-2 border-l pl-3">
-            <UserCircle className="h-5 w-5 text-muted-foreground" />
-            <span className="text-sm font-medium hidden sm:inline">{user.username}</span>
+          <div className="flex items-center gap-1 border-l pl-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/account')}
+              className="text-muted-foreground"
+              title="Account settings"
+            >
+              <UserCircle className="h-5 w-5" />
+              <span className="text-sm font-medium hidden sm:inline">{user.displayName || user.username}</span>
+            </Button>
             <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground">
               <LogOut className="h-4 w-4" />
               <span className="hidden sm:inline">Logout</span>

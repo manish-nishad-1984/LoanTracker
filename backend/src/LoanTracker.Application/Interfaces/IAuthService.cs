@@ -7,6 +7,7 @@ public interface IAuthService
 {
     Task<Result<LoginResponse>> LoginAsync(LoginRequest request, CancellationToken ct = default);
     Task<Result> ChangePasswordAsync(string username, ChangePasswordRequest request, CancellationToken ct = default);
+    Task<Result<LoginResponse>> UpdateAccountAsync(string currentUsername, UpdateAccountRequest request, CancellationToken ct = default);
 }
 
 public interface IPasswordHasher

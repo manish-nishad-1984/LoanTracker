@@ -20,6 +20,7 @@ interface AuthContextValue {
   isAuthenticated: boolean
   login: (username: string, password: string) => Promise<{ ok: boolean; error?: string }>
   logout: () => void
+  applySession: (token: string, user: AuthUser) => void
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -56,8 +57,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }
 
+  // Update the stored session after an account change (new token + user).
+  const applySession: AuthContextValue['applySession'] = (token, authUser) => {
+    localStorage.setItem(TOKEN_KEY, token)
+    localStorage.setItem(USER_KEY, JSON.stringify(authUser))
+    setUser(authUser)
+  }
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout, applySession }}>
       {children}
     </AuthContext.Provider>
   )

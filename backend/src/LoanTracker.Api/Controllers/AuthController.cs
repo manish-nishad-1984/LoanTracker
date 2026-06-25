@@ -13,7 +13,8 @@ namespace LoanTracker.Api.Controllers;
 public class AuthController(
     IAuthService authService,
     IValidator<LoginRequest> loginValidator,
-    IValidator<ChangePasswordRequest> changePasswordValidator) : ControllerBase
+    IValidator<ChangePasswordRequest> changePasswordValidator,
+    IValidator<UpdateAccountRequest> updateAccountValidator) : ControllerBase
 {
     /// <summary>Authenticate and receive a JWT.</summary>
     [AllowAnonymous]
@@ -55,5 +56,22 @@ public class AuthController(
         var username = User.Identity?.Name ?? string.Empty;
         var result = await authService.ChangePasswordAsync(username, request, ct);
         return result.IsSuccess ? NoContent() : StatusCode(result.StatusCode, result.Error);
+    }
+
+    /// <summary>Update the current user's username, display name, and/or password. Returns a fresh token.</summary>
+    [Authorize]
+    [HttpPut("account")]
+    [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> UpdateAccount([FromBody] UpdateAccountRequest request, CancellationToken ct = default)
+    {
+        var validation = await updateAccountValidator.ValidateAsync(request, ct);
+        if (!validation.IsValid)
+            return BadRequest(validation.Errors.Select(e => new { e.PropertyName, e.ErrorMessage }));
+
+        var username = User.Identity?.Name ?? string.Empty;
+        var result = await authService.UpdateAccountAsync(username, request, ct);
+        return result.IsSuccess ? Ok(result.Value) : StatusCode(result.StatusCode, result.Error);
     }
 }

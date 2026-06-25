@@ -53,6 +53,7 @@ builder.Services.AddScoped<IValidator<CreatePaymentRequest>, CreatePaymentValida
 builder.Services.AddScoped<IValidator<UpdatePaymentRequest>, UpdatePaymentValidator>();
 builder.Services.AddScoped<IValidator<LoginRequest>, LoginValidator>();
 builder.Services.AddScoped<IValidator<ChangePasswordRequest>, ChangePasswordValidator>();
+builder.Services.AddScoped<IValidator<UpdateAccountRequest>, UpdateAccountValidator>();
 
 // ── JWT authentication ───────────────────────────────────────
 var jwtKey = builder.Configuration["Jwt:Key"]

@@ -24,4 +24,11 @@ export const authApi = {
     apiClient
       .post('/auth/change-password', { currentPassword, newPassword })
       .then((r) => r.data),
+
+  updateAccount: (data: {
+    currentPassword: string
+    newUsername?: string
+    newDisplayName?: string
+    newPassword?: string
+  }) => apiClient.put<LoginResponse>('/auth/account', data).then((r) => r.data),
 }

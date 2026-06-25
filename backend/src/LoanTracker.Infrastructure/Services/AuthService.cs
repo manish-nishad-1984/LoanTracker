@@ -51,6 +51,40 @@ public class AuthService(
         return Result.Success();
     }
 
+    public async Task<Result<LoginResponse>> UpdateAccountAsync(
+        string currentUsername, UpdateAccountRequest request, CancellationToken ct = default)
+    {
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Username == currentUsername && u.DeletedAt == null, ct);
+        if (user is null) return Result<LoginResponse>.NotFound("User", currentUsername);
+
+        if (!passwordHasher.Verify(request.CurrentPassword, user.PasswordHash))
+            return Result<LoginResponse>.BadRequest("Current password is incorrect.");
+
+        if (!string.IsNullOrWhiteSpace(request.NewUsername))
+        {
+            var newName = request.NewUsername.Trim();
+            if (!newName.Equals(user.Username, StringComparison.Ordinal))
+            {
+                var taken = await db.Users.AnyAsync(u => u.Username == newName && u.Id != user.Id, ct);
+                if (taken) return Result<LoginResponse>.Conflict($"Username '{newName}' is already taken.");
+                user.Username = newName;
+            }
+        }
+
+        if (request.NewDisplayName is not null)
+            user.DisplayName = string.IsNullOrWhiteSpace(request.NewDisplayName) ? null : request.NewDisplayName.Trim();
+
+        if (!string.IsNullOrWhiteSpace(request.NewPassword))
+            user.PasswordHash = passwordHasher.Hash(request.NewPassword);
+
+        await db.SaveChangesAsync(ct);
+        logger.LogInformation("Account updated for user {Username}", user.Username);
+
+        // Re-issue a token so the new username/identity takes effect immediately.
+        var (token, expiresAt) = GenerateToken(user.Username, user.DisplayName);
+        return Result<LoginResponse>.Success(new LoginResponse(token, user.Username, user.DisplayName, expiresAt));
+    }
+
     private (string token, DateTime expiresAt) GenerateToken(string username, string? displayName)
     {
         var jwt = configuration.GetSection("Jwt");
