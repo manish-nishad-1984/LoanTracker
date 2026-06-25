@@ -1,0 +1,39 @@
+# Environment
+.env
+.env.local
+.env.production
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.nupkg
+TestResults/
+coverage/
+
+# Node / React
+node_modules/
+dist/
+.vite/
+*.local
+
+# Misc
+.DS_Store
+Thumbs.db
+*.log
+
+# AI assistant / IDE / agent tooling (not part of the application).
+# .jetro contains local credentials & cache — must never be committed.
+.jetro/
+.claude/
+.cursor/
+.agents/
+.windsurfrules
+.mcp.json
+AGENT.md
+.github/copilot-instructions.md
+
+# TypeScript build info
+*.tsbuildinfo

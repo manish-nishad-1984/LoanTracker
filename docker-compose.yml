@@ -1,0 +1,53 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: loantracker_db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-loantracker}
+      POSTGRES_USER: ${POSTGRES_USER:-loantracker_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-LoanTracker@2024}
+    ports:
+      - "5432:5432"
+    # NOTE: schema + seed are applied by the API on startup via EF Core migrations
+    # and DbInitializer (single source of truth). The raw scripts in ./database are
+    # kept as reference deliverables only.
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-loantracker_user} -d ${POSTGRES_DB:-loantracker}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: loantracker_api
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-loantracker};Username=${POSTGRES_USER:-loantracker_user};Password=${POSTGRES_PASSWORD:-LoanTracker@2024};Include Error Detail=true"
+    ports:
+      - "8090:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8090/api}
+    container_name: loantracker_frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

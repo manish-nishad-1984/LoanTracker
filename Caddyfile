@@ -1,0 +1,9 @@
+# Caddy reverse proxy with automatic HTTPS (Let's Encrypt).
+# Replace the domain below if you change it. Caddy will fetch and renew the TLS
+# certificate automatically as long as the domain's DNS A record points to this
+# server and ports 80/443 are open.
+
+motiwala.pratishthabridal.com {
+    encode gzip
+    reverse_proxy frontend:80
+}
