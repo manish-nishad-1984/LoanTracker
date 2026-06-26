@@ -289,6 +289,8 @@ export interface LenderSummaryDto {
   totalPrincipalPaid: number
   totalInterestPaid: number
   totalAmountPaid: number
+  interestAccrued: number
+  interestOutstanding: number
 }
 
 export interface MonthlyPaymentDto {

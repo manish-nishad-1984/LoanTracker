@@ -4,7 +4,7 @@ import type { LoanDirection } from '@/types'
 
 const KEYS = {
   summary: (direction?: LoanDirection) => ['dashboard', 'summary', direction ?? 'all'] as const,
-  lenders: ['dashboard', 'lenders'] as const,
+  lenders: (direction?: LoanDirection) => ['dashboard', 'lenders', direction ?? 'all'] as const,
   monthly: (months: number) => ['dashboard', 'monthly', months] as const,
   yearly: (years: number) => ['dashboard', 'yearly', years] as const,
 }
@@ -17,10 +17,10 @@ export function useDashboard(direction?: LoanDirection) {
   })
 }
 
-export function useDashboardLenders() {
+export function useDashboardLenders(direction?: LoanDirection) {
   return useQuery({
-    queryKey: KEYS.lenders,
-    queryFn: () => dashboardApi.getLenderSummaries(),
+    queryKey: KEYS.lenders(direction),
+    queryFn: () => dashboardApi.getLenderSummaries(direction),
   })
 }
 

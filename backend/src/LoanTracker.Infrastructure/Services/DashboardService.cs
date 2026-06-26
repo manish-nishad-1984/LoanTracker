@@ -111,15 +111,20 @@ public class DashboardService(IApplicationDbContext db) : IDashboardService
             .AsNoTracking()
             .Include(le => le.Loans)
                 .ThenInclude(l => l.Payments)
+            .Include(le => le.Loans)
+                .ThenInclude(l => l.InterestRateHistory)
             .ToListAsync(ct);
 
         return lenders
             .Select(le =>
             {
                 var loans = le.Loans.Where(l => direction == null || l.Direction == direction).ToList();
-                var payments = loans.SelectMany(l => l.Payments).ToList();
+                var payments = loans.SelectMany(l => l.Payments.Where(p => !p.IsDeleted)).ToList();
                 var totalBorrowed = loans.Sum(l => l.PrincipalAmount);
                 var principalPaid = payments.Sum(p => p.PrincipalAmount);
+                var interestPaid = payments.Sum(p => p.InterestAmount);
+                var interestAccrued = loans.Sum(l =>
+                    LoanService.ComputeAccruedInterest(l, l.Payments.Where(p => !p.IsDeleted).ToList()));
 
                 return new LenderSummaryDto(
                     le.Id,
@@ -130,8 +135,10 @@ public class DashboardService(IApplicationDbContext db) : IDashboardService
                     totalBorrowed,
                     totalBorrowed - principalPaid,
                     principalPaid,
-                    payments.Sum(p => p.InterestAmount),
-                    payments.Sum(p => p.TotalAmount)
+                    interestPaid,
+                    payments.Sum(p => p.TotalAmount),
+                    interestAccrued,
+                    Math.Max(0m, interestAccrued - interestPaid)
                 );
             })
             .Where(s => direction == null || s.TotalLoans > 0)

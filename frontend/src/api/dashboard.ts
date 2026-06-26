@@ -13,9 +13,9 @@ export const dashboardApi = {
       .get<DashboardSummaryDto>('/dashboard', { params: { direction } })
       .then((r) => r.data),
 
-  getLenderSummaries: () =>
+  getLenderSummaries: (direction?: LoanDirection) =>
     apiClient
-      .get<LenderSummaryDto[]>('/dashboard/lenders')
+      .get<LenderSummaryDto[]>('/dashboard/lenders', { params: { direction } })
       .then((r) => r.data),
 
   getMonthlyTrend: (months = 24) =>

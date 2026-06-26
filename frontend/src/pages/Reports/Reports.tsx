@@ -11,13 +11,15 @@ import {
   ResponsiveContainer, Legend, LineChart, Line,
 } from 'recharts'
 import { formatCurrency, formatDate, paymentTypeLabel } from '@/lib/utils'
+import type { LoanDirection } from '@/types'
 
 export default function Reports() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString())
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
+  const [partyDirection, setPartyDirection] = useState<LoanDirection | ''>('')
 
-  const { data: lenderSummaries } = useDashboardLenders()
+  const { data: lenderSummaries } = useDashboardLenders(partyDirection || undefined)
   const { data: yearlySummary } = useYearlySummary(6)
   const { data: monthly } = useMonthlyTrend(24)
   const { data: payments } = usePayments({
@@ -104,10 +106,25 @@ export default function Reports() {
         </CardContent>
       </Card>
 
-      {/* Party-wise Summary Table */}
+      {/* Party-wise Interest Summary Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Party-wise Summary</CardTitle>
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <CardTitle>Party-wise Interest &amp; Outstanding</CardTitle>
+              <CardDescription>Interest paid vs interest remaining (still to pay), per party</CardDescription>
+            </div>
+            <Select value={partyDirection} onValueChange={(v) => setPartyDirection(v as LoanDirection | '')}>
+              <SelectTrigger className="w-44">
+                <SelectValue placeholder="All types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All (Loan + Lent)</SelectItem>
+                <SelectItem value="Borrowed">Loan (Borrowed)</SelectItem>
+                <SelectItem value="Lent">Lent</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -115,10 +132,10 @@ export default function Reports() {
               <thead>
                 <tr className="border-b bg-muted/30">
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Party</th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Borrowed</th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Principal Paid</th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Interest Paid</th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Outstanding</th>
+                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Interest Remaining</th>
+                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Outstanding Principal</th>
                   <th className="text-center px-4 py-3 font-medium text-muted-foreground">Loans</th>
                 </tr>
               </thead>
@@ -129,10 +146,12 @@ export default function Reports() {
                       <p className="font-medium">{l.lenderName}</p>
                       <p className="text-xs text-muted-foreground">{l.lenderType}</p>
                     </td>
-                    <td className="px-4 py-3 text-right">{formatCurrency(l.totalBorrowed)}</td>
                     <td className="px-4 py-3 text-right text-emerald-600">{formatCurrency(l.totalPrincipalPaid)}</td>
-                    <td className="px-4 py-3 text-right text-amber-600">{formatCurrency(l.totalInterestPaid)}</td>
-                    <td className="px-4 py-3 text-right font-semibold text-red-600">
+                    <td className="px-4 py-3 text-right text-emerald-700">{formatCurrency(l.totalInterestPaid)}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-amber-600">
+                      {formatCurrency(l.interestOutstanding)}
+                    </td>
+                    <td className="px-4 py-3 text-right text-red-600">
                       {formatCurrency(l.totalOutstanding)}
                     </td>
                     <td className="px-4 py-3 text-center">
@@ -140,19 +159,22 @@ export default function Reports() {
                     </td>
                   </tr>
                 ))}
+                {(lenderSummaries ?? []).length === 0 && (
+                  <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">No parties to show</td></tr>
+                )}
               </tbody>
               {lenderSummaries && lenderSummaries.length > 0 && (
                 <tfoot>
                   <tr className="bg-muted/50 font-semibold border-t-2">
                     <td className="px-4 py-3">Total</td>
-                    <td className="px-4 py-3 text-right">
-                      {formatCurrency(lenderSummaries.reduce((s, l) => s + l.totalBorrowed, 0))}
-                    </td>
                     <td className="px-4 py-3 text-right text-emerald-600">
                       {formatCurrency(lenderSummaries.reduce((s, l) => s + l.totalPrincipalPaid, 0))}
                     </td>
-                    <td className="px-4 py-3 text-right text-amber-600">
+                    <td className="px-4 py-3 text-right text-emerald-700">
                       {formatCurrency(lenderSummaries.reduce((s, l) => s + l.totalInterestPaid, 0))}
+                    </td>
+                    <td className="px-4 py-3 text-right text-amber-600">
+                      {formatCurrency(lenderSummaries.reduce((s, l) => s + l.interestOutstanding, 0))}
                     </td>
                     <td className="px-4 py-3 text-right text-red-600">
                       {formatCurrency(lenderSummaries.reduce((s, l) => s + l.totalOutstanding, 0))}

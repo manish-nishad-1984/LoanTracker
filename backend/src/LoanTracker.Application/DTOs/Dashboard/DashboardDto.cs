@@ -37,7 +37,9 @@ public record LenderSummaryDto(
     decimal TotalOutstanding,
     decimal TotalPrincipalPaid,
     decimal TotalInterestPaid,
-    decimal TotalAmountPaid
+    decimal TotalAmountPaid,
+    decimal InterestAccrued,
+    decimal InterestOutstanding
 );
 
 public record MonthlyPaymentDto(
