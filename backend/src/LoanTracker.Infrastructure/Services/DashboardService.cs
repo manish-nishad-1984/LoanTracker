@@ -1,20 +1,22 @@
 using LoanTracker.Application.DTOs.Dashboard;
 using LoanTracker.Application.Interfaces;
+using LoanTracker.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace LoanTracker.Infrastructure.Services;
 
 public class DashboardService(IApplicationDbContext db) : IDashboardService
 {
-    public async Task<DashboardSummaryDto> GetSummaryAsync(CancellationToken ct = default)
+    public async Task<DashboardSummaryDto> GetSummaryAsync(LoanDirection? direction = null, CancellationToken ct = default)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var thisMonth = new DateOnly(today.Year, today.Month, 1);
         var thisYear = new DateOnly(today.Year, 1, 1);
 
-        // Core loan aggregates
+        // Core loan aggregates (filtered by direction when provided)
         var loanStats = await db.Loans
             .AsNoTracking()
+            .Where(l => direction == null || l.Direction == direction)
             .GroupBy(_ => 1)
             .Select(g => new
             {
@@ -26,9 +28,10 @@ public class DashboardService(IApplicationDbContext db) : IDashboardService
             })
             .FirstOrDefaultAsync(ct);
 
-        // Payment aggregates
+        // Payment aggregates (filtered by the parent loan's direction)
         var paymentStats = await db.LoanPayments
             .AsNoTracking()
+            .Where(p => direction == null || p.Loan.Direction == direction)
             .GroupBy(_ => 1)
             .Select(g => new
             {
@@ -41,18 +44,19 @@ public class DashboardService(IApplicationDbContext db) : IDashboardService
             })
             .FirstOrDefaultAsync(ct);
 
-        var lenderSummaries = await GetLenderSummariesAsync(ct);
-        var monthlyTrend = await GetMonthlyTrendAsync(12, ct);
-        var recentPayments = await GetRecentPaymentsAsync(10, ct);
-        var topOutstanding = await GetTopOutstandingLoansAsync(5, ct);
+        var lenderSummaries = await GetLenderSummariesAsync(direction, ct);
+        var monthlyTrend = await GetMonthlyTrendAsync(12, direction, ct);
+        var recentPayments = await GetRecentPaymentsAsync(10, direction, ct);
+        var topOutstanding = await GetTopOutstandingLoansAsync(5, direction, ct);
 
         var totalBorrowed = loanStats?.TotalBorrowed ?? 0;
         var totalPrincipalPaid = paymentStats?.TotalPrincipalPaid ?? 0;
         var totalInterestPaid = paymentStats?.TotalInterestPaid ?? 0;
 
-        // Accrued interest to date across all loans (reducing-balance daily accrual).
+        // Accrued interest to date (reducing-balance daily accrual), direction-filtered.
         var allLoans = await db.Loans
             .AsNoTracking()
+            .Where(l => direction == null || l.Direction == direction)
             .Include(l => l.Payments)
             .Include(l => l.InterestRateHistory)
             .ToListAsync(ct);
@@ -98,7 +102,7 @@ public class DashboardService(IApplicationDbContext db) : IDashboardService
         );
     }
 
-    public async Task<IReadOnlyList<LenderSummaryDto>> GetLenderSummariesAsync(CancellationToken ct = default)
+    public async Task<IReadOnlyList<LenderSummaryDto>> GetLenderSummariesAsync(LoanDirection? direction = null, CancellationToken ct = default)
     {
         // Global query filters already exclude soft-deleted loans/payments.
         // Fetch then aggregate in memory — data volume is small and this avoids
@@ -112,7 +116,7 @@ public class DashboardService(IApplicationDbContext db) : IDashboardService
         return lenders
             .Select(le =>
             {
-                var loans = le.Loans.ToList();
+                var loans = le.Loans.Where(l => direction == null || l.Direction == direction).ToList();
                 var payments = loans.SelectMany(l => l.Payments).ToList();
                 var totalBorrowed = loans.Sum(l => l.PrincipalAmount);
                 var principalPaid = payments.Sum(p => p.PrincipalAmount);
@@ -130,17 +134,19 @@ public class DashboardService(IApplicationDbContext db) : IDashboardService
                     payments.Sum(p => p.TotalAmount)
                 );
             })
+            .Where(s => direction == null || s.TotalLoans > 0)
             .OrderByDescending(s => s.TotalOutstanding)
             .ToList();
     }
 
-    public async Task<IReadOnlyList<MonthlyPaymentDto>> GetMonthlyTrendAsync(int months = 24, CancellationToken ct = default)
+    public async Task<IReadOnlyList<MonthlyPaymentDto>> GetMonthlyTrendAsync(int months = 24, LoanDirection? direction = null, CancellationToken ct = default)
     {
         var cutoff = DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(-months));
 
         var raw = await db.LoanPayments
             .AsNoTracking()
             .Where(p => p.PaymentDate >= cutoff)
+            .Where(p => direction == null || p.Loan.Direction == direction)
             .GroupBy(p => new { p.PaymentDate.Year, p.PaymentDate.Month })
             .Select(g => new
             {
@@ -184,11 +190,12 @@ public class DashboardService(IApplicationDbContext db) : IDashboardService
         return raw;
     }
 
-    private async Task<IReadOnlyList<RecentPaymentDto>> GetRecentPaymentsAsync(int count, CancellationToken ct)
+    private async Task<IReadOnlyList<RecentPaymentDto>> GetRecentPaymentsAsync(int count, LoanDirection? direction, CancellationToken ct)
     {
         return await db.LoanPayments
             .AsNoTracking()
             .Include(p => p.Loan).ThenInclude(l => l.Lender)
+            .Where(p => direction == null || p.Loan.Direction == direction)
             .OrderByDescending(p => p.PaymentDate)
             .ThenByDescending(p => p.CreatedAt)
             .Take(count)
@@ -203,13 +210,14 @@ public class DashboardService(IApplicationDbContext db) : IDashboardService
             .ToListAsync(ct);
     }
 
-    private async Task<IReadOnlyList<LoanOutstandingDto>> GetTopOutstandingLoansAsync(int count, CancellationToken ct)
+    private async Task<IReadOnlyList<LoanOutstandingDto>> GetTopOutstandingLoansAsync(int count, LoanDirection? direction, CancellationToken ct)
     {
         var activeLoans = await db.Loans
             .AsNoTracking()
             .Include(l => l.Lender)
             .Include(l => l.Payments)
             .Where(l => l.Status == Domain.Enums.LoanStatus.Active)
+            .Where(l => direction == null || l.Direction == direction)
             .ToListAsync(ct);
 
         return activeLoans

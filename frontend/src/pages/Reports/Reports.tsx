@@ -104,17 +104,17 @@ export default function Reports() {
         </CardContent>
       </Card>
 
-      {/* Lender-wise Summary Table */}
+      {/* Party-wise Summary Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Lender-wise Summary</CardTitle>
+          <CardTitle>Party-wise Summary</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/30">
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Lender</th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Party</th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Borrowed</th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Principal Paid</th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Interest Paid</th>
@@ -204,7 +204,7 @@ export default function Reports() {
               <thead>
                 <tr className="border-b bg-muted/30">
                   <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Date</th>
-                  <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Lender</th>
+                  <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Party</th>
                   <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Loan</th>
                   <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">Total</th>
                   <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">Principal</th>

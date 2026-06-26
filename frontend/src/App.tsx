@@ -27,7 +27,18 @@ export default function App() {
             }
           >
             <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route path="dashboard" element={<Dashboard />} />
+            <Route
+              path="dashboard"
+              element={<Dashboard title="Overall Dashboard" subtitle="All loans — borrowed and lent combined" />}
+            />
+            <Route
+              path="loan-dashboard"
+              element={<Dashboard direction="Borrowed" title="Loan Dashboard" subtitle="Money you borrowed (you owe)" />}
+            />
+            <Route
+              path="lent-dashboard"
+              element={<Dashboard direction="Lent" title="Lent Dashboard" subtitle="Money you lent out (owed to you)" />}
+            />
             <Route path="lenders" element={<LenderList />} />
             <Route path="lenders/:id" element={<LenderDetail />} />
             <Route path="loans" element={<LoanList />} />

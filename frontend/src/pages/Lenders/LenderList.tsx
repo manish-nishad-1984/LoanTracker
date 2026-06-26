@@ -35,7 +35,7 @@ export default function LenderList() {
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search lenders..."
+            placeholder="Search parties..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -43,13 +43,13 @@ export default function LenderList() {
         </div>
         <Button onClick={() => setShowCreate(true)}>
           <Plus className="h-4 w-4" />
-          Add Lender
+          Add Party
         </Button>
       </div>
 
       {/* Stats bar */}
       <div className="flex gap-6 text-sm text-muted-foreground">
-        <span>{data?.totalCount ?? 0} total lenders</span>
+        <span>{data?.totalCount ?? 0} total parties</span>
         <span>{lenders.filter(l => l.isActive).length} active</span>
       </div>
 
@@ -63,9 +63,9 @@ export default function LenderList() {
       ) : lenders.length === 0 ? (
         <EmptyState
           icon={Users}
-          title="No lenders yet"
-          description="Add your first lender — a person or bank you've borrowed money from."
-          actionLabel="Add Lender"
+          title="No parties yet"
+          description="Add your first party — a person or bank you borrow from or lend to."
+          actionLabel="Add Party"
           onAction={() => setShowCreate(true)}
         />
       ) : (
@@ -160,7 +160,7 @@ export default function LenderList() {
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
         <DialogContent className="max-w-xl">
           <DialogHeader>
-            <DialogTitle>Add New Lender</DialogTitle>
+            <DialogTitle>Add New Party</DialogTitle>
           </DialogHeader>
           <LenderForm
             onSuccess={() => {

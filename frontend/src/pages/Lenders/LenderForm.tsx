@@ -76,9 +76,9 @@ export default function LenderForm({ lender, onSuccess, onCancel }: Props) {
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-      {/* Lender Type */}
+      {/* Party Type */}
       <div className="grid gap-2">
-        <Label>Lender Type *</Label>
+        <Label>Party Type *</Label>
         <Select
           value={form.watch('lenderType')}
           onValueChange={(v) => form.setValue('lenderType', v as LenderType)}
@@ -170,7 +170,7 @@ export default function LenderForm({ lender, onSuccess, onCancel }: Props) {
           Cancel
         </Button>
         <Button type="submit" disabled={isPending}>
-          {isPending ? 'Saving...' : lender ? 'Update Lender' : 'Create Lender'}
+          {isPending ? 'Saving...' : lender ? 'Update Party' : 'Create Party'}
         </Button>
       </div>
     </form>

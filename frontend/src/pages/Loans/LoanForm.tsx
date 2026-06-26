@@ -86,105 +86,91 @@ export default function LoanForm({ loan, defaultLenderId, onSuccess, onCancel }:
   const direction = form.watch('direction')
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
       {/* Direction — Borrowed vs Lent */}
-      <div className="grid gap-2">
-        <Label>Loan Type *</Label>
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            disabled={!!loan}
-            onClick={() => form.setValue('direction', 'Borrowed')}
-            className={`rounded-lg border p-3 text-left text-sm transition-colors ${
-              direction === 'Borrowed'
-                ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                : 'hover:bg-muted/50'
-            } ${loan ? 'opacity-60 cursor-not-allowed' : ''}`}
-          >
-            <p className="font-medium">📥 Borrowed</p>
-            <p className="text-xs text-muted-foreground">Money I took — I owe them</p>
-          </button>
-          <button
-            type="button"
-            disabled={!!loan}
-            onClick={() => form.setValue('direction', 'Lent')}
-            className={`rounded-lg border p-3 text-left text-sm transition-colors ${
-              direction === 'Lent'
-                ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                : 'hover:bg-muted/50'
-            } ${loan ? 'opacity-60 cursor-not-allowed' : ''}`}
-          >
-            <p className="font-medium">📤 Lent</p>
-            <p className="text-xs text-muted-foreground">Money I gave — they owe me</p>
-          </button>
-        </div>
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          disabled={!!loan}
+          onClick={() => form.setValue('direction', 'Borrowed')}
+          className={`rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
+            direction === 'Borrowed' ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'hover:bg-muted/50'
+          } ${loan ? 'opacity-60 cursor-not-allowed' : ''}`}
+        >
+          <span className="font-medium">📥 Borrowed</span>
+          <span className="block text-xs text-muted-foreground">I owe them</span>
+        </button>
+        <button
+          type="button"
+          disabled={!!loan}
+          onClick={() => form.setValue('direction', 'Lent')}
+          className={`rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
+            direction === 'Lent' ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'hover:bg-muted/50'
+          } ${loan ? 'opacity-60 cursor-not-allowed' : ''}`}
+        >
+          <span className="font-medium">📤 Lent</span>
+          <span className="block text-xs text-muted-foreground">They owe me</span>
+        </button>
       </div>
 
-      {/* Counterparty (lender or borrower depending on direction) */}
-      {!loan && (
-        <div className="grid gap-2">
-          <Label>{direction === 'Lent' ? 'Borrower *' : 'Lender *'}</Label>
-          <Select
-            value={form.watch('lenderId')}
-            onValueChange={(v) => form.setValue('lenderId', v)}
-            disabled={!!defaultLenderId}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={direction === 'Lent' ? 'Who did you lend to?' : 'Who did you borrow from?'} />
-            </SelectTrigger>
-            <SelectContent>
-              {lenders.map((l) => (
-                <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground">
-            {direction === 'Lent'
-              ? 'Pick the person you lent to from your contacts (add them under Lenders first if needed).'
-              : 'Pick the lender. Add new ones under the Lenders page.'}
-          </p>
-          {form.formState.errors.lenderId && (
-            <p className="text-xs text-destructive">{form.formState.errors.lenderId.message}</p>
-          )}
-        </div>
-      )}
+      {/* EMI toggle */}
+      <label className="flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm cursor-pointer bg-muted/30">
+        <input
+          type="checkbox"
+          checked={isEmi}
+          onChange={(e) => form.setValue('isEmiLoan', e.target.checked)}
+          className="h-4 w-4"
+        />
+        EMI-based loan (fixed installments)
+      </label>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="grid gap-2">
+      {/* Fields — compact 2-column grid */}
+      <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
+        {!loan && (
+          <div className="col-span-2 grid gap-1">
+            <Label>Party *</Label>
+            <Select
+              value={form.watch('lenderId')}
+              onValueChange={(v) => form.setValue('lenderId', v)}
+              disabled={!!defaultLenderId}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={direction === 'Lent' ? 'Who did you lend to?' : 'Who did you borrow from?'} />
+              </SelectTrigger>
+              <SelectContent>
+                {lenders.map((l) => (
+                  <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {form.formState.errors.lenderId && (
+              <p className="text-xs text-destructive">{form.formState.errors.lenderId.message}</p>
+            )}
+          </div>
+        )}
+
+        <div className="grid gap-1">
           <Label>Loan Number / Ref</Label>
-          <Input {...form.register('loanNumber')} placeholder="Optional reference" />
+          <Input {...form.register('loanNumber')} placeholder="Optional" />
         </div>
-        <div className="grid gap-2">
+        <div className="grid gap-1">
           <Label>Principal Amount *</Label>
-          <Input
-            {...form.register('principalAmount')}
-            type="number"
-            step="0.01"
-            placeholder="0.00"
-            disabled={!!loan}
-          />
+          <Input {...form.register('principalAmount')} type="number" step="0.01" placeholder="0.00" disabled={!!loan} />
           {form.formState.errors.principalAmount && (
             <p className="text-xs text-destructive">{form.formState.errors.principalAmount.message}</p>
           )}
         </div>
-      </div>
 
-      <div className="grid gap-2">
-        <Label>Description</Label>
-        <Input {...form.register('description')} placeholder="Purpose of this loan..." />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="grid gap-2">
-          <Label>Interest Rate (% p.a.) *</Label>
-          <Input
-            {...form.register('currentInterestRate')}
-            type="number"
-            step="0.0001"
-            placeholder="0.00"
-          />
+        <div className="col-span-2 grid gap-1">
+          <Label>Description</Label>
+          <Input {...form.register('description')} placeholder="Purpose of this loan..." />
         </div>
-        <div className="grid gap-2">
+
+        <div className="grid gap-1">
+          <Label>Interest Rate (% p.a.) *</Label>
+          <Input {...form.register('currentInterestRate')} type="number" step="0.0001" placeholder="0.00" />
+        </div>
+        <div className="grid gap-1">
           <Label>Interest Type *</Label>
           <Select
             value={form.watch('interestCalculationType')}
@@ -200,10 +186,8 @@ export default function LoanForm({ loan, defaultLenderId, onSuccess, onCancel }:
             </SelectContent>
           </Select>
         </div>
-      </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="grid gap-2">
+        <div className="grid gap-1">
           <Label>Payment Frequency *</Label>
           <Select
             value={form.watch('paymentFrequency')}
@@ -222,55 +206,32 @@ export default function LoanForm({ loan, defaultLenderId, onSuccess, onCancel }:
             </SelectContent>
           </Select>
         </div>
-        <div className="grid gap-2">
+        <div className="grid gap-1">
           <Label>Loan Start Date *</Label>
-          <Input
-            {...form.register('loanStartDate')}
-            type="date"
-            disabled={!!loan}
-          />
+          <Input {...form.register('loanStartDate')} type="date" disabled={!!loan} />
         </div>
-      </div>
 
-      {/* EMI */}
-      <div className="flex items-center gap-3 rounded-lg border p-3 bg-muted/30">
-        <input
-          type="checkbox"
-          id="isEmiLoan"
-          checked={isEmi}
-          onChange={(e) => form.setValue('isEmiLoan', e.target.checked)}
-          className="h-4 w-4"
-        />
-        <Label htmlFor="isEmiLoan" className="cursor-pointer">This is an EMI-based loan (fixed installments)</Label>
-      </div>
-
-      {isEmi && (
-        <div className="grid gap-2">
-          <Label>EMI Amount *</Label>
-          <Input
-            {...form.register('emiAmount')}
-            type="number"
-            step="0.01"
-            placeholder="Monthly EMI amount"
-          />
-          {form.formState.errors.emiAmount && (
-            <p className="text-xs text-destructive">{form.formState.errors.emiAmount.message}</p>
-          )}
-        </div>
-      )}
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="grid gap-2">
+        {isEmi && (
+          <div className="grid gap-1">
+            <Label>EMI Amount *</Label>
+            <Input {...form.register('emiAmount')} type="number" step="0.01" placeholder="Monthly EMI" />
+            {form.formState.errors.emiAmount && (
+              <p className="text-xs text-destructive">{form.formState.errors.emiAmount.message}</p>
+            )}
+          </div>
+        )}
+        <div className={isEmi ? 'grid gap-1' : 'col-span-2 grid gap-1'}>
           <Label>Expected End Date</Label>
           <Input {...form.register('loanEndDate')} type="date" />
         </div>
-        <div className="grid gap-2">
+
+        <div className="col-span-2 grid gap-1">
           <Label>Notes</Label>
           <Input {...form.register('notes')} placeholder="Any remarks..." />
         </div>
       </div>
 
-      <div className="flex justify-end gap-2 pt-2">
+      <div className="flex justify-end gap-2 pt-1">
         <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>Cancel</Button>
         <Button type="submit" disabled={isPending}>
           {isPending ? 'Saving...' : loan ? 'Update Loan' : 'Create Loan'}

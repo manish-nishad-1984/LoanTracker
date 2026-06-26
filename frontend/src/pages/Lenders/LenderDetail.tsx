@@ -172,7 +172,7 @@ export default function LenderDetail() {
             <CardContent className="p-0">
               {loans.length === 0 ? (
                 <div className="py-8 text-center text-sm text-muted-foreground">
-                  No loans from this lender yet.
+                  No loans from this party yet.
                 </div>
               ) : (
                 <div className="divide-y">
@@ -213,7 +213,7 @@ export default function LenderDetail() {
       <Dialog open={showEdit} onOpenChange={setShowEdit}>
         <DialogContent className="max-w-xl">
           <DialogHeader>
-            <DialogTitle>Edit Lender</DialogTitle>
+            <DialogTitle>Edit Party</DialogTitle>
           </DialogHeader>
           <LenderForm
             lender={lender}
@@ -228,7 +228,7 @@ export default function LenderDetail() {
 
       {/* Add Loan Dialog */}
       <Dialog open={showAddLoan} onOpenChange={setShowAddLoan}>
-        <DialogContent className="max-w-xl">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Add Loan from {lender.name}</DialogTitle>
           </DialogHeader>

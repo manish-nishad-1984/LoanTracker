@@ -1,17 +1,18 @@
 import { useQuery } from '@tanstack/react-query'
 import { dashboardApi } from '@/api/dashboard'
+import type { LoanDirection } from '@/types'
 
 const KEYS = {
-  summary: ['dashboard', 'summary'] as const,
+  summary: (direction?: LoanDirection) => ['dashboard', 'summary', direction ?? 'all'] as const,
   lenders: ['dashboard', 'lenders'] as const,
   monthly: (months: number) => ['dashboard', 'monthly', months] as const,
   yearly: (years: number) => ['dashboard', 'yearly', years] as const,
 }
 
-export function useDashboard() {
+export function useDashboard(direction?: LoanDirection) {
   return useQuery({
-    queryKey: KEYS.summary,
-    queryFn: () => dashboardApi.getSummary(),
+    queryKey: KEYS.summary(direction),
+    queryFn: () => dashboardApi.getSummary(direction),
     staleTime: 60_000,
   })
 }

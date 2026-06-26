@@ -1,4 +1,5 @@
 using LoanTracker.Application.Interfaces;
+using LoanTracker.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LoanTracker.Api.Controllers;
@@ -8,29 +9,30 @@ namespace LoanTracker.Api.Controllers;
 [Produces("application/json")]
 public class DashboardController(IDashboardService dashboardService) : ControllerBase
 {
-    /// <summary>Full dashboard summary: totals, counts, recent payments, trends</summary>
+    /// <summary>Full dashboard summary. Optional ?direction=Borrowed|Lent filters everything.</summary>
     [HttpGet]
-    public async Task<IActionResult> GetSummary(CancellationToken ct = default)
+    public async Task<IActionResult> GetSummary([FromQuery] LoanDirection? direction, CancellationToken ct = default)
     {
-        var result = await dashboardService.GetSummaryAsync(ct);
+        var result = await dashboardService.GetSummaryAsync(direction, ct);
         return Ok(result);
     }
 
-    /// <summary>Per-lender aggregated summary</summary>
+    /// <summary>Per-party aggregated summary (optionally filtered by direction)</summary>
     [HttpGet("lenders")]
-    public async Task<IActionResult> GetLenderSummaries(CancellationToken ct = default)
+    public async Task<IActionResult> GetLenderSummaries([FromQuery] LoanDirection? direction, CancellationToken ct = default)
     {
-        var result = await dashboardService.GetLenderSummariesAsync(ct);
+        var result = await dashboardService.GetLenderSummariesAsync(direction, ct);
         return Ok(result);
     }
 
-    /// <summary>Monthly payment trend (last N months)</summary>
+    /// <summary>Monthly payment trend (last N months, optionally filtered by direction)</summary>
     [HttpGet("monthly")]
     public async Task<IActionResult> GetMonthlyTrend(
         [FromQuery] int months = 24,
+        [FromQuery] LoanDirection? direction = null,
         CancellationToken ct = default)
     {
-        var result = await dashboardService.GetMonthlyTrendAsync(months, ct);
+        var result = await dashboardService.GetMonthlyTrendAsync(months, direction, ct);
         return Ok(result);
     }
 

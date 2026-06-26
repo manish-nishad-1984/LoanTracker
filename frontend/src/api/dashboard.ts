@@ -4,11 +4,14 @@ import type {
   LenderSummaryDto,
   MonthlyPaymentDto,
   YearlySummaryDto,
+  LoanDirection,
 } from '@/types'
 
 export const dashboardApi = {
-  getSummary: () =>
-    apiClient.get<DashboardSummaryDto>('/dashboard').then((r) => r.data),
+  getSummary: (direction?: LoanDirection) =>
+    apiClient
+      .get<DashboardSummaryDto>('/dashboard', { params: { direction } })
+      .then((r) => r.data),
 
   getLenderSummaries: () =>
     apiClient

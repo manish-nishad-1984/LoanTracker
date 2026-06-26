@@ -6,12 +6,16 @@ import {
   BarChart3,
   Landmark,
   TrendingDown,
+  ArrowDownCircle,
+  ArrowUpCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/lenders', icon: Users, label: 'Lenders' },
+  { to: '/loan-dashboard', icon: ArrowDownCircle, label: 'Loan Dashboard' },
+  { to: '/lent-dashboard', icon: ArrowUpCircle, label: 'Lent Dashboard' },
+  { to: '/lenders', icon: Users, label: 'Party Master' },
   { to: '/loans', icon: CreditCard, label: 'Loans' },
   { to: '/reports', icon: BarChart3, label: 'Reports' },
 ]

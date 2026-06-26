@@ -102,7 +102,7 @@ export default function LoanList() {
               <thead>
                 <tr className="border-b bg-muted/30">
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Loan</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Lender</th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Party</th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Principal</th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Outstanding</th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Interest (accrued)</th>
@@ -172,7 +172,7 @@ export default function LoanList() {
       )}
 
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="max-w-xl">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Add New Loan</DialogTitle>
           </DialogHeader>

@@ -1,4 +1,5 @@
-import { useDashboard, useMonthlyTrend } from '@/hooks/useDashboard'
+import { useDashboard } from '@/hooks/useDashboard'
+import type { LoanDirection } from '@/types'
 import {
   Wallet,
   TrendingDown,
@@ -45,9 +46,22 @@ function LoadingGrid() {
   )
 }
 
-export default function Dashboard() {
-  const { data, isLoading, error } = useDashboard()
-  const { data: monthly } = useMonthlyTrend(12)
+interface DashboardProps {
+  direction?: LoanDirection
+  title?: string
+  subtitle?: string
+}
+
+export default function Dashboard({ direction, title, subtitle }: DashboardProps = {}) {
+  const { data, isLoading, error } = useDashboard(direction)
+
+  const isLent = direction === 'Lent'
+  const borrowedLabel = isLent ? 'Total Lent' : 'Total Borrowed'
+  const outstandingLabel = isLent
+    ? 'Outstanding (owed to me)'
+    : direction === 'Borrowed'
+    ? 'Outstanding (I owe)'
+    : 'Outstanding Principal'
 
   if (isLoading) return <LoadingGrid />
 
@@ -66,7 +80,7 @@ export default function Dashboard() {
     { name: 'Outstanding', value: data.totalOutstanding },
   ]
 
-  const chartData = (monthly ?? data.monthlyTrend)
+  const chartData = data.monthlyTrend
     .slice(0, 12)
     .reverse()
     .map((m) => ({
@@ -77,21 +91,28 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
+      {(title || subtitle) && (
+        <div>
+          {title && <h2 className="text-xl font-bold">{title}</h2>}
+          {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
+        </div>
+      )}
+
       {/* Summary Cards Row 1 */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <SummaryCard
-          title="Total Borrowed"
+          title={borrowedLabel}
           value={data.totalBorrowed}
           icon={Wallet}
           iconColor="text-blue-600"
           description="All-time principal"
         />
         <SummaryCard
-          title="Outstanding Principal"
+          title={outstandingLabel}
           value={data.totalOutstanding}
           icon={TrendingDown}
-          iconColor="text-red-600"
-          description="Still owed"
+          iconColor={isLent ? 'text-blue-600' : 'text-red-600'}
+          description={isLent ? 'Still to receive' : 'Still owed'}
         />
         <SummaryCard
           title="Total Principal Paid"
@@ -133,30 +154,32 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Direction Row — I owe vs owed to me */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
-        <SummaryCard
-          title="I Owe (Borrowed)"
-          value={data.borrowedOutstanding}
-          icon={ArrowDownCircle}
-          iconColor="text-orange-600"
-          description={`${data.borrowedLoans} borrowed loan${data.borrowedLoans === 1 ? '' : 's'} outstanding`}
-        />
-        <SummaryCard
-          title="Owed to Me (Lent)"
-          value={data.lentOutstanding}
-          icon={ArrowUpCircle}
-          iconColor="text-blue-600"
-          description={`${data.lentLoans} lent loan${data.lentLoans === 1 ? '' : 's'} outstanding`}
-        />
-        <SummaryCard
-          title="Net Position"
-          value={data.netPosition}
-          icon={Scale}
-          iconColor={data.netPosition >= 0 ? 'text-emerald-600' : 'text-red-600'}
-          description={data.netPosition >= 0 ? 'Net owed to you' : 'Net you owe'}
-        />
-      </div>
+      {/* Direction Row — only on the overall dashboard */}
+      {!direction && (
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+          <SummaryCard
+            title="I Owe (Borrowed)"
+            value={data.borrowedOutstanding}
+            icon={ArrowDownCircle}
+            iconColor="text-orange-600"
+            description={`${data.borrowedLoans} borrowed loan${data.borrowedLoans === 1 ? '' : 's'} outstanding`}
+          />
+          <SummaryCard
+            title="Owed to Me (Lent)"
+            value={data.lentOutstanding}
+            icon={ArrowUpCircle}
+            iconColor="text-blue-600"
+            description={`${data.lentLoans} lent loan${data.lentLoans === 1 ? '' : 's'} outstanding`}
+          />
+          <SummaryCard
+            title="Net Position"
+            value={data.netPosition}
+            icon={Scale}
+            iconColor={data.netPosition >= 0 ? 'text-emerald-600' : 'text-red-600'}
+            description={data.netPosition >= 0 ? 'Net owed to you' : 'Net you owe'}
+          />
+        </div>
+      )}
 
       {/* Summary Cards Row 2 */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
@@ -251,14 +274,14 @@ export default function Dashboard() {
         {/* Lender Summary Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Lender-wise Outstanding</CardTitle>
+            <CardTitle>Party-wise Outstanding</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-muted/30">
-                    <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Lender</th>
+                    <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Party</th>
                     <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">Outstanding</th>
                     <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">Loans</th>
                   </tr>
@@ -338,7 +361,7 @@ export default function Dashboard() {
                 <thead>
                   <tr className="border-b bg-muted/30">
                     <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Loan</th>
-                    <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Lender</th>
+                    <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Party</th>
                     <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">Original</th>
                     <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">Outstanding</th>
                     <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">Rate</th>

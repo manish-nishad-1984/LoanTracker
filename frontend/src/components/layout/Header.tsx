@@ -5,9 +5,12 @@ import { useAuth } from '@/contexts/AuthContext'
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'Dashboard',
-  '/lenders': 'Lenders',
+  '/loan-dashboard': 'Loan Dashboard',
+  '/lent-dashboard': 'Lent Dashboard',
+  '/lenders': 'Party Master',
   '/loans': 'Loans',
   '/reports': 'Reports',
+  '/account': 'Account Settings',
 }
 
 export default function Header() {
