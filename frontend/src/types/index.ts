@@ -333,3 +333,31 @@ export interface YearlySummaryDto {
   interestPaid: number
   paymentCount: number
 }
+
+// ─── Banking (statement import) ───────────────────────────────────────────────
+
+export interface BankTransactionPreview {
+  rowNumber: number
+  date: string | null
+  narration: string
+  referenceNo: string | null
+  valueDate: string | null
+  withdrawal: number
+  deposit: number
+  closingBalance: number | null
+  direction: 'In' | 'Out'
+  guessedType: string
+  guessedCategory: string
+}
+
+export interface BankStatementPreview {
+  accountNumber: string | null
+  accountName: string | null
+  bank: string | null
+  period: string | null
+  transactionCount: number
+  totalDeposit: number
+  totalWithdrawal: number
+  netChange: number
+  transactions: BankTransactionPreview[]
+}

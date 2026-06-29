@@ -33,6 +33,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IBankStatementService, BankStatementService>();
 
         return services;
     }

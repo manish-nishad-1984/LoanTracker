@@ -7,6 +7,7 @@ import LoanList from '@/pages/Loans/LoanList'
 import LoanDetail from '@/pages/Loans/LoanDetail'
 import Reports from '@/pages/Reports/Reports'
 import Account from '@/pages/Account'
+import BankImport from '@/pages/Bank/BankImport'
 import Login from '@/pages/Login'
 import { Toaster } from '@/components/ui/toaster'
 import { AuthProvider } from '@/contexts/AuthContext'
@@ -44,6 +45,7 @@ export default function App() {
             <Route path="loans" element={<LoanList />} />
             <Route path="loans/:id" element={<LoanDetail />} />
             <Route path="reports" element={<Reports />} />
+            <Route path="bank/import" element={<BankImport />} />
             <Route path="account" element={<Account />} />
           </Route>
         </Routes>
