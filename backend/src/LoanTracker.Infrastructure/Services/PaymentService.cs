@@ -83,8 +83,11 @@ public class PaymentService(IApplicationDbContext db, ILogger<PaymentService> lo
         if (loan is null)
             return Result<PaymentDto>.NotFound("Loan", request.LoanId);
 
-        if (loan.Status == LoanStatus.Closed)
-            return Result<PaymentDto>.BadRequest("Cannot record payment on a closed loan.");
+        // A closed loan has its principal fully repaid — but interest/penalty may still
+        // be settled afterwards. Allow interest/penalty-only payments; only block new principal.
+        if (loan.Status == LoanStatus.Closed && request.PrincipalAmount > 0)
+            return Result<PaymentDto>.BadRequest(
+                "This loan is closed (principal fully repaid). You can record an interest or penalty payment, but not additional principal.");
 
         var currentOutstanding = loan.PrincipalAmount - loan.Payments.Sum(p => p.PrincipalAmount);
 

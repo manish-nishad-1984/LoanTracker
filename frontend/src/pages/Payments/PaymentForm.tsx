@@ -27,11 +27,12 @@ type FormData = z.infer<typeof schema>
 interface Props {
   loanId: string
   outstandingPrincipal: number
+  interestOutstanding?: number
   onSuccess: () => void
   onCancel: () => void
 }
 
-export default function PaymentForm({ loanId, outstandingPrincipal, onSuccess, onCancel }: Props) {
+export default function PaymentForm({ loanId, outstandingPrincipal, interestOutstanding = 0, onSuccess, onCancel }: Props) {
   const createPayment = useCreatePayment()
 
   const form = useForm<FormData>({
@@ -66,10 +67,32 @@ export default function PaymentForm({ loanId, outstandingPrincipal, onSuccess, o
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
       {/* Outstanding info */}
-      <div className="rounded-lg bg-muted/50 px-4 py-3 text-sm">
-        <p className="text-muted-foreground">Outstanding Principal</p>
-        <p className="text-lg font-bold text-red-600">{formatCurrency(outstandingPrincipal)}</p>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-lg bg-muted/50 px-4 py-3 text-sm">
+          <p className="text-muted-foreground">Outstanding Principal</p>
+          <p className="text-lg font-bold text-red-600">{formatCurrency(outstandingPrincipal)}</p>
+        </div>
+        <div className="rounded-lg bg-muted/50 px-4 py-3 text-sm">
+          <div className="flex items-center justify-between">
+            <p className="text-muted-foreground">Interest Pending</p>
+            {interestOutstanding > 0 && (
+              <button
+                type="button"
+                className="text-xs text-primary hover:underline"
+                onClick={() => form.setValue('interestAmount', Number(interestOutstanding.toFixed(2)))}
+              >
+                Pay full
+              </button>
+            )}
+          </div>
+          <p className="text-lg font-bold text-amber-600">{formatCurrency(interestOutstanding)}</p>
+        </div>
       </div>
+      {outstandingPrincipal === 0 && (
+        <p className="text-xs text-muted-foreground -mt-1">
+          Principal is fully paid. Enter the interest amount to settle remaining interest.
+        </p>
+      )}
 
       <div className="grid gap-2">
         <Label>Payment Date *</Label>

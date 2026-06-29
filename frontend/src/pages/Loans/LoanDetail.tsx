@@ -85,16 +85,17 @@ export default function LoanDetail() {
         </div>
         <div className="flex gap-2 shrink-0">
           {loan.status === 'Active' && (
-            <>
-              <Button variant="outline" size="sm" onClick={() => setShowEdit(true)}>
-                <Edit className="h-4 w-4" />
-                Edit
-              </Button>
-              <Button size="sm" onClick={() => setShowPayment(true)}>
-                <Plus className="h-4 w-4" />
-                Add Payment
-              </Button>
-            </>
+            <Button variant="outline" size="sm" onClick={() => setShowEdit(true)}>
+              <Edit className="h-4 w-4" />
+              Edit
+            </Button>
+          )}
+          {/* Allow payments while active, or on a closed loan that still has interest pending */}
+          {(loan.status === 'Active' || loan.interestOutstanding > 0) && (
+            <Button size="sm" onClick={() => setShowPayment(true)}>
+              <Plus className="h-4 w-4" />
+              {loan.status === 'Active' ? 'Add Payment' : 'Pay Interest'}
+            </Button>
           )}
           {loan.status === 'Active' && loan.outstandingPrincipal === 0 && (
             <Button
@@ -242,10 +243,10 @@ export default function LoanDetail() {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base">Payment History ({payments.length})</CardTitle>
-                {loan.status === 'Active' && (
+                {(loan.status === 'Active' || loan.interestOutstanding > 0) && (
                   <Button size="sm" onClick={() => setShowPayment(true)}>
                     <Plus className="h-3.5 w-3.5" />
-                    Record Payment
+                    {loan.status === 'Active' ? 'Record Payment' : 'Pay Interest'}
                   </Button>
                 )}
               </div>
@@ -334,6 +335,7 @@ export default function LoanDetail() {
           <PaymentForm
             loanId={loan.id}
             outstandingPrincipal={loan.outstandingPrincipal}
+            interestOutstanding={loan.interestOutstanding}
             onSuccess={() => { setShowPayment(false); toast({ title: 'Payment recorded' }) }}
             onCancel={() => setShowPayment(false)}
           />
