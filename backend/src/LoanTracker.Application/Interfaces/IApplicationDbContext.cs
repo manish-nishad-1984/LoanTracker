@@ -11,6 +11,8 @@ public interface IApplicationDbContext
     DbSet<LoanInterestRateHistory> LoanInterestRateHistories { get; }
     DbSet<LoanDocument> LoanDocuments { get; }
     DbSet<User> Users { get; }
+    DbSet<BankAccount> BankAccounts { get; }
+    DbSet<BankTransaction> BankTransactions { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

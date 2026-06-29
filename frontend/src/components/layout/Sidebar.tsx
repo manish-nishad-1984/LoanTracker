@@ -9,6 +9,7 @@ import {
   ArrowDownCircle,
   ArrowUpCircle,
   Landmark as BankIcon,
+  FileUp,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -19,7 +20,8 @@ const navItems = [
   { to: '/lenders', icon: Users, label: 'Party Master' },
   { to: '/loans', icon: CreditCard, label: 'Loans' },
   { to: '/reports', icon: BarChart3, label: 'Reports' },
-  { to: '/bank/import', icon: BankIcon, label: 'Bank Statement' },
+  { to: '/bank/dashboard', icon: BankIcon, label: 'Bank Dashboard' },
+  { to: '/bank/import', icon: FileUp, label: 'Import Statement' },
 ]
 
 export default function Sidebar() {

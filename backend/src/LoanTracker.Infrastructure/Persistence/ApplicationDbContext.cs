@@ -14,6 +14,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<LoanInterestRateHistory> LoanInterestRateHistories => Set<LoanInterestRateHistory>();
     public DbSet<LoanDocument> LoanDocuments => Set<LoanDocument>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
+    public DbSet<BankTransaction> BankTransactions => Set<BankTransaction>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -25,6 +27,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         modelBuilder.ApplyConfiguration(new LoanInterestRateHistoryConfiguration());
         modelBuilder.ApplyConfiguration(new LoanDocumentConfiguration());
         modelBuilder.ApplyConfiguration(new UserConfiguration());
+        modelBuilder.ApplyConfiguration(new BankAccountConfiguration());
+        modelBuilder.ApplyConfiguration(new BankTransactionConfiguration());
 
         // Global soft-delete filter for Lender and Loan
         modelBuilder.Entity<Lender>().HasQueryFilter(e => e.DeletedAt == null);

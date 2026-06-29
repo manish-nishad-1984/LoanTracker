@@ -361,3 +361,75 @@ export interface BankStatementPreview {
   netChange: number
   transactions: BankTransactionPreview[]
 }
+
+export interface ImportResult {
+  accountId: string
+  accountNumber: string
+  accountName: string | null
+  totalParsed: number
+  imported: number
+  skippedDuplicates: number
+}
+
+export interface BankAccount {
+  id: string
+  accountNumber: string
+  accountName: string | null
+  bank: string | null
+  transactionCount: number
+}
+
+export interface CategoryStat {
+  category: string
+  total: number
+  percentage: number
+  count: number
+  average: number
+  highest: number
+  lowest: number
+}
+export interface MerchantStat { merchant: string; total: number; count: number }
+export interface PaymentMethodStat { method: string; total: number; count: number; percentage: number }
+export interface MonthlyCashflow { year: number; month: number; monthName: string; income: number; expense: number; net: number; closingBalance: number | null }
+export interface DailySpend { date: string; spend: number }
+export interface WeekendWeekday { weekendSpend: number; weekdaySpend: number; weekendCount: number; weekdayCount: number }
+export interface Recurring { merchant: string; count: number; avgAmount: number; category: string; likelySubscription: boolean }
+export interface TxnLine { id: string; date: string; narration: string; merchant: string | null; amount: number; direction: string; category: string; paymentMethod: string }
+
+export interface BankDashboard {
+  accountNumber: string | null
+  accountName: string | null
+  bank: string | null
+  fromDate: string | null
+  toDate: string | null
+  days: number
+  openingBalance: number
+  closingBalance: number
+  totalCredits: number
+  totalDebits: number
+  netCashFlow: number
+  avgDailyIncome: number
+  avgDailyExpense: number
+  highestCredit: number
+  highestDebit: number
+  transactionCount: number
+  avgTransactionAmount: number
+  largestMerchant: string | null
+  mostFrequentMerchant: string | null
+  mostUsedPaymentMethod: string | null
+  savingsRate: number
+  expenseRatio: number
+  healthScore: number
+  healthLabel: string
+  incomeByCategory: CategoryStat[]
+  expenseByCategory: CategoryStat[]
+  topMerchants: MerchantStat[]
+  paymentMethods: PaymentMethodStat[]
+  monthlyCashflow: MonthlyCashflow[]
+  dailySpend: DailySpend[]
+  weekendVsWeekday: WeekendWeekday
+  recurringPayments: Recurring[]
+  largestExpenses: TxnLine[]
+  largestIncomes: TxnLine[]
+  insights: string[]
+}

@@ -1,23 +1,35 @@
 import { useRef, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import {
-  Upload, FileSpreadsheet, ArrowDownLeft, ArrowUpRight, Scale, AlertCircle, Landmark,
+  Upload, FileSpreadsheet, ArrowDownLeft, ArrowUpRight, Scale, AlertCircle, Landmark, Save, CheckCircle2,
 } from 'lucide-react'
 import { bankApi } from '@/api/bank'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import SummaryCard from '@/components/common/SummaryCard'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { useToast } from '@/hooks/useToast'
 import type { BankStatementPreview } from '@/types'
 
 export default function BankImport() {
   const inputRef = useRef<HTMLInputElement>(null)
+  const navigate = useNavigate()
+  const { toast } = useToast()
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<BankStatementPreview | null>(null)
 
   const mutation = useMutation({
     mutationFn: (f: File) => bankApi.previewStatement(f),
     onSuccess: (data) => setPreview(data),
+  })
+
+  const importMut = useMutation({
+    mutationFn: (f: File) => bankApi.importStatement(f),
+    onSuccess: (res) => {
+      toast({ title: `Imported ${res.imported} transactions`, description: res.skippedDuplicates ? `${res.skippedDuplicates} duplicates skipped` : undefined })
+    },
   })
 
   const onPick = (f: File | null) => {
@@ -86,9 +98,33 @@ export default function BankImport() {
                   {preview.bank} · A/C {preview.accountNumber} · {preview.period}
                 </p>
               </div>
-              <Badge variant="outline">{preview.transactionCount} transactions</Badge>
+              <div className="flex items-center gap-3">
+                <Badge variant="outline">{preview.transactionCount} transactions</Badge>
+                {importMut.isSuccess ? (
+                  <Button size="sm" variant="outline" onClick={() => navigate('/bank/dashboard')}>
+                    <CheckCircle2 className="h-4 w-4" /> View Dashboard
+                  </Button>
+                ) : (
+                  <Button size="sm" onClick={() => file && importMut.mutate(file)} disabled={importMut.isPending}>
+                    <Save className="h-4 w-4" />
+                    {importMut.isPending ? 'Importing…' : 'Import & Save'}
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
+          {importMut.isError && (
+            <div className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              {importMut.error instanceof Error ? importMut.error.message : 'Import failed.'}
+            </div>
+          )}
+          {importMut.isSuccess && (
+            <div className="flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              Saved {importMut.data.imported} transactions{importMut.data.skippedDuplicates > 0 ? `, skipped ${importMut.data.skippedDuplicates} duplicates` : ''}. Open the Bank Dashboard to see the analysis.
+            </div>
+          )}
 
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
             <SummaryCard title="Money In (Credits)" value={preview.totalDeposit} icon={ArrowDownLeft} iconColor="text-emerald-600" />

@@ -10,7 +10,9 @@ const PAGE_TITLES: Record<string, string> = {
   '/lenders': 'Party Master',
   '/loans': 'Loans',
   '/reports': 'Reports',
-  '/bank': 'Bank Statement',
+  '/bank/dashboard': 'Bank Dashboard',
+  '/bank/import': 'Import Statement',
+  '/bank': 'Banking',
   '/account': 'Account Settings',
 }
 
