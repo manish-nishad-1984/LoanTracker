@@ -26,7 +26,7 @@ const navItems = [
 
 export default function Sidebar() {
   return (
-    <aside className="fixed left-0 top-0 z-30 h-full w-60 flex-col bg-sidebar text-sidebar-foreground hidden lg:flex">
+    <aside className="fixed left-0 top-0 z-30 h-full w-60 flex-col bg-sidebar text-sidebar-foreground hidden lg:flex print:!hidden">
       {/* Brand */}
       <div className="flex h-16 items-center gap-2.5 border-b border-sidebar-border px-6">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary">

@@ -29,7 +29,7 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b bg-background/95 backdrop-blur px-6">
+    <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b bg-background/95 backdrop-blur px-6 print:hidden">
       <h1 className="text-lg font-semibold">{title}</h1>
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" className="relative">

@@ -84,3 +84,29 @@
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 }
+
+/* ── Print / PDF (vector-quality A4 report) ───────────────────────── */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 14mm 12mm;
+  }
+  html, body {
+    background: #fff !important;
+  }
+  /* keep cards/sections from splitting across pages */
+  .report-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    box-shadow: none !important;
+  }
+  .print-page-break {
+    break-before: page;
+    page-break-before: always;
+  }
+  /* ensure chart/table colors render in print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

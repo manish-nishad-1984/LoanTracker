@@ -1,11 +1,15 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
   PieChart, Pie, Cell, LineChart, Line,
 } from 'recharts'
-import { AlertCircle, Lightbulb, Landmark } from 'lucide-react'
+import { AlertCircle, Lightbulb, Landmark, Download, Filter } from 'lucide-react'
 import { bankApi } from '@/api/bank'
-import { formatCurrency } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { formatCurrency, formatDate } from '@/lib/utils'
 import type { BankDashboard as Dash } from '@/types'
 
 // Cold, corporate blue–grey palette
@@ -19,7 +23,7 @@ const kFmt = (v: number) =>
 
 function Section({ title, desc, children, className = '' }: { title: string; desc?: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className={`rounded-lg border border-slate-200 bg-white ${className}`}>
+    <div className={`report-section rounded-lg border border-slate-200 bg-white ${className}`}>
       <div className="border-b border-slate-100 px-5 py-3">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-600">{title}</h3>
         {desc && <p className="text-xs text-slate-400 mt-0.5">{desc}</p>}
@@ -42,18 +46,57 @@ function Stat({ label, value, sub, tone }: { label: string; value: string; sub?:
 const tooltipStyle = { fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0' }
 
 export default function BankDashboard() {
-  const accountId: string | undefined = undefined
+  const [accountId, setAccountId] = useState<string | undefined>(undefined)
+  const [from, setFrom] = useState('')
+  const [to, setTo] = useState('')
+
+  const { data: accounts } = useQuery({ queryKey: ['bank', 'accounts'], queryFn: bankApi.getAccounts })
   const { data, isLoading, error } = useQuery<Dash>({
-    queryKey: ['bank', 'dashboard', accountId ?? 'all'],
-    queryFn: () => bankApi.getDashboard({ accountId }),
+    queryKey: ['bank', 'dashboard', accountId ?? 'all', from, to],
+    queryFn: () => bankApi.getDashboard({ accountId, from: from || undefined, to: to || undefined }),
   })
 
-  if (isLoading) return <div className="h-64 rounded-lg bg-slate-100 animate-pulse" />
+  const FilterBar = (
+    <div className="print:hidden flex flex-wrap items-end gap-2 rounded-lg border border-slate-200 bg-slate-50/60 px-4 py-3">
+      <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500 mr-1">
+        <Filter className="h-3.5 w-3.5" /> Filters
+      </div>
+      {accounts && accounts.length > 1 && (
+        <Select value={accountId ?? ''} onValueChange={(v) => setAccountId(v || undefined)}>
+          <SelectTrigger className="h-9 w-56"><SelectValue placeholder="All accounts" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All accounts</SelectItem>
+            {accounts.map((a) => (
+              <SelectItem key={a.id} value={a.id}>{a.bank} · {a.accountNumber}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+      <div className="flex items-center gap-1.5">
+        <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-9 w-36" />
+        <span className="text-xs text-slate-400">to</span>
+        <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-9 w-36" />
+      </div>
+      {(from || to || accountId) && (
+        <Button variant="outline" size="sm" className="h-9" onClick={() => { setFrom(''); setTo(''); setAccountId(undefined) }}>Clear</Button>
+      )}
+      <div className="ml-auto">
+        <Button size="sm" className="h-9" onClick={() => window.print()}>
+          <Download className="h-4 w-4" /> Download PDF
+        </Button>
+      </div>
+    </div>
+  )
+
+  if (isLoading) return <div className="space-y-4">{FilterBar}<div className="h-64 rounded-lg bg-slate-100 animate-pulse" /></div>
   if (error || !data) {
     return (
-      <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800">
-        <AlertCircle className="h-4 w-4" />
-        <p className="text-sm">{error instanceof Error ? error.message : 'No data. Import a statement first (Bank Statement → Import).'}</p>
+      <div className="space-y-4">
+        {FilterBar}
+        <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800">
+          <AlertCircle className="h-4 w-4" />
+          <p className="text-sm">{error instanceof Error ? error.message : 'No data. Import a statement first (Import Statement page).'}</p>
+        </div>
       </div>
     )
   }
@@ -67,6 +110,20 @@ export default function BankDashboard() {
 
   return (
     <div className="space-y-5">
+      {FilterBar}
+
+      {/* Print-only report cover header */}
+      <div className="hidden print:block border-b-2 border-slate-800 pb-3 mb-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">Confidential · Financial Analysis Report</p>
+            <h1 className="text-xl font-bold text-slate-900">{data.bank} — Account Statement Analysis</h1>
+            <p className="text-xs text-slate-600">{data.accountName} · A/C {data.accountNumber} · Period {data.fromDate} to {data.toDate}</p>
+          </div>
+          <p className="text-xs text-slate-400">Generated {formatDate(new Date().toISOString())}</p>
+        </div>
+      </div>
+
       {/* Title */}
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 pb-4">
         <div>
@@ -286,6 +343,12 @@ export default function BankDashboard() {
           ))}
         </ul>
       </Section>
+
+      {/* Print footer */}
+      <div className="hidden print:block border-t border-slate-300 pt-2 mt-4 text-[10px] text-slate-400 flex justify-between">
+        <span>{data.bank} · A/C {data.accountNumber} · Confidential</span>
+        <span>Report generated {formatDate(new Date().toISOString())} · LoanTracker</span>
+      </div>
     </div>
   )
 }
