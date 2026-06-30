@@ -344,7 +344,7 @@ public partial class BankStatementService(IApplicationDbContext db, ILogger<Bank
         return ins;
     }
 
-    public async Task<PagedResult<TxnLineDto>> GetTransactionsAsync(
+    public async Task<BankTxnListDto> GetTransactionsAsync(
         Guid? accountId, string? category, string? direction, string? search,
         DateOnly? from, DateOnly? to, int page, int pageSize, CancellationToken ct = default)
     {
@@ -359,12 +359,14 @@ public partial class BankStatementService(IApplicationDbContext db, ILogger<Bank
                           || (t.Merchant != null && t.Merchant.ToLower().Contains(search.ToLower())));
 
         var total = await q.CountAsync(ct);
+        var totalIn = await q.SumAsync(t => (decimal?)t.Deposit, ct) ?? 0;
+        var totalOut = await q.SumAsync(t => (decimal?)t.Withdrawal, ct) ?? 0;
         var items = await q.OrderByDescending(t => t.TxnDate).ThenByDescending(t => t.Seq)
             .Skip((page - 1) * pageSize).Take(pageSize)
             .Select(t => new TxnLineDto(t.Id, t.TxnDate, t.Narration, t.Merchant,
                 t.Direction == "In" ? t.Deposit : t.Withdrawal, t.Direction, t.Category, t.PaymentMethod))
             .ToListAsync(ct);
-        return PagedResult<TxnLineDto>.Create(items, total, page, pageSize);
+        return new BankTxnListDto(items, total, page, pageSize, totalIn, totalOut);
     }
 
     public async Task<Result> UpdateCategoryAsync(Guid transactionId, string category, CancellationToken ct = default)

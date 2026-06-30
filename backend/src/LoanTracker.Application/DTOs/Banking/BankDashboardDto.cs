@@ -27,6 +27,10 @@ public record TxnLineDto(
     Guid Id, DateOnly Date, string Narration, string? Merchant,
     decimal Amount, string Direction, string Category, string PaymentMethod);
 
+public record BankTxnListDto(
+    IReadOnlyList<TxnLineDto> Items, int TotalCount, int Page, int PageSize,
+    decimal TotalIn, decimal TotalOut);
+
 public record BankDashboardDto(
     string? AccountNumber,
     string? AccountName,

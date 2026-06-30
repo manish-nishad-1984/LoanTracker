@@ -396,6 +396,15 @@ export interface WeekendWeekday { weekendSpend: number; weekdaySpend: number; we
 export interface Recurring { merchant: string; count: number; avgAmount: number; category: string; likelySubscription: boolean }
 export interface TxnLine { id: string; date: string; narration: string; merchant: string | null; amount: number; direction: string; category: string; paymentMethod: string }
 
+export interface BankTxnList {
+  items: TxnLine[]
+  totalCount: number
+  page: number
+  pageSize: number
+  totalIn: number
+  totalOut: number
+}
+
 export interface BankDashboard {
   accountNumber: string | null
   accountName: string | null

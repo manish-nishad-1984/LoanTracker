@@ -16,7 +16,7 @@ public interface IBankStatementService
     /// <summary>Full executive analytics for an account (or all accounts if null).</summary>
     Task<Result<BankDashboardDto>> GetDashboardAsync(Guid? accountId, DateOnly? from, DateOnly? to, CancellationToken ct = default);
 
-    Task<PagedResult<TxnLineDto>> GetTransactionsAsync(
+    Task<BankTxnListDto> GetTransactionsAsync(
         Guid? accountId, string? category, string? direction, string? search,
         DateOnly? from, DateOnly? to, int page, int pageSize, CancellationToken ct = default);
 

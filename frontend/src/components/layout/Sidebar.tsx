@@ -10,6 +10,7 @@ import {
   ArrowUpCircle,
   Landmark as BankIcon,
   FileUp,
+  Table2 as TableIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -21,6 +22,7 @@ const navItems = [
   { to: '/loans', icon: CreditCard, label: 'Loans' },
   { to: '/reports', icon: BarChart3, label: 'Reports' },
   { to: '/bank/dashboard', icon: BankIcon, label: 'Bank Dashboard' },
+  { to: '/bank/report', icon: TableIcon, label: 'Bank Report' },
   { to: '/bank/import', icon: FileUp, label: 'Import Statement' },
 ]
 
