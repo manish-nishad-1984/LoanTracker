@@ -405,6 +405,14 @@ export interface BankTxnList {
   totalOut: number
 }
 
+export interface GroupSummary {
+  key: string
+  count: number
+  totalIn: number
+  totalOut: number
+  net: number
+}
+
 export interface BankDashboard {
   accountNumber: string | null
   accountName: string | null

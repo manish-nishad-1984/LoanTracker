@@ -45,9 +45,18 @@ public class BankController(IBankStatementService bank) : ControllerBase
     [HttpGet("transactions")]
     public async Task<IActionResult> Transactions(
         [FromQuery] Guid? accountId, [FromQuery] string? category, [FromQuery] string? direction,
-        [FromQuery] string? search, [FromQuery] DateOnly? from, [FromQuery] DateOnly? to,
+        [FromQuery] string? search, [FromQuery] string? merchant, [FromQuery] string? paymentMethod,
+        [FromQuery] DateOnly? from, [FromQuery] DateOnly? to,
         [FromQuery] int page = 1, [FromQuery] int pageSize = 50, CancellationToken ct = default)
-        => Ok(await bank.GetTransactionsAsync(accountId, category, direction, search, from, to, page, pageSize, ct));
+        => Ok(await bank.GetTransactionsAsync(accountId, category, direction, search, merchant, paymentMethod, from, to, page, pageSize, ct));
+
+    /// <summary>Grouped summary: groupBy = category | merchant | paymentMethod | month | direction.</summary>
+    [HttpGet("summary")]
+    public async Task<IActionResult> Summary(
+        [FromQuery] string groupBy = "category", [FromQuery] Guid? accountId = null,
+        [FromQuery] string? category = null, [FromQuery] string? direction = null, [FromQuery] string? search = null,
+        [FromQuery] DateOnly? from = null, [FromQuery] DateOnly? to = null, CancellationToken ct = default)
+        => Ok(await bank.GetGroupedSummaryAsync(groupBy, accountId, category, direction, search, from, to, ct));
 
     public record UpdateCategoryBody(string Category);
 

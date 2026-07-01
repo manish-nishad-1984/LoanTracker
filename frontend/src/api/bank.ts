@@ -1,6 +1,6 @@
 import { apiClient } from '@/lib/api'
 import type {
-  BankStatementPreview, ImportResult, BankAccount, BankDashboard, BankTxnList,
+  BankStatementPreview, ImportResult, BankAccount, BankDashboard, BankTxnList, GroupSummary,
 } from '@/types'
 
 export const bankApi = {
@@ -27,8 +27,14 @@ export const bankApi = {
 
   getTransactions: (params: {
     accountId?: string; category?: string; direction?: string; search?: string
+    merchant?: string; paymentMethod?: string
     from?: string; to?: string; page?: number; pageSize?: number
   }) => apiClient.get<BankTxnList>('/bank/transactions', { params }).then((r) => r.data),
+
+  getSummary: (params: {
+    groupBy: string; accountId?: string; category?: string; direction?: string
+    search?: string; from?: string; to?: string
+  }) => apiClient.get<GroupSummary[]>('/bank/summary', { params }).then((r) => r.data),
 
   updateCategory: (id: string, category: string) =>
     apiClient.put(`/bank/transactions/${id}/category`, { category }).then((r) => r.data),

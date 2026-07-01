@@ -18,7 +18,12 @@ public interface IBankStatementService
 
     Task<BankTxnListDto> GetTransactionsAsync(
         Guid? accountId, string? category, string? direction, string? search,
+        string? merchant, string? paymentMethod,
         DateOnly? from, DateOnly? to, int page, int pageSize, CancellationToken ct = default);
+
+    Task<IReadOnlyList<GroupSummaryDto>> GetGroupedSummaryAsync(
+        string groupBy, Guid? accountId, string? category, string? direction, string? search,
+        DateOnly? from, DateOnly? to, CancellationToken ct = default);
 
     Task<Result> UpdateCategoryAsync(Guid transactionId, string category, CancellationToken ct = default);
 }

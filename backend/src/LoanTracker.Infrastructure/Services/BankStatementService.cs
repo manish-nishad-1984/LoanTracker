@@ -289,6 +289,33 @@ public partial class BankStatementService(IApplicationDbContext db, ILogger<Bank
             weekend, recurring, largestExpenses, largestIncomes, insights));
     }
 
+    public async Task<IReadOnlyList<GroupSummaryDto>> GetGroupedSummaryAsync(
+        string groupBy, Guid? accountId, string? category, string? direction, string? search,
+        DateOnly? from, DateOnly? to, CancellationToken ct = default)
+    {
+        var list = await FilterTxns(accountId, category, direction, search, null, null, from, to)
+            .ToListAsync(ct);
+
+        Func<Domain.Entities.BankTransaction, string> sel = groupBy.ToLowerInvariant() switch
+        {
+            "merchant" => t => string.IsNullOrWhiteSpace(t.Merchant) ? "(Unknown)" : t.Merchant!,
+            "paymentmethod" or "method" => t => t.PaymentMethod,
+            "month" => t => new DateTime(t.TxnDate.Year, t.TxnDate.Month, 1).ToString("MMM yyyy"),
+            "direction" => t => t.Direction == "In" ? "Money In" : "Money Out",
+            _ => t => t.Category
+        };
+
+        var groups = list.GroupBy(sel)
+            .Select(g => new GroupSummaryDto(g.Key, g.Count(),
+                g.Sum(x => x.Deposit), g.Sum(x => x.Withdrawal),
+                g.Sum(x => x.Deposit) - g.Sum(x => x.Withdrawal)))
+            .ToList();
+
+        return groupBy.Equals("month", StringComparison.OrdinalIgnoreCase)
+            ? groups.OrderBy(g => DateTime.ParseExact(g.Key, "MMM yyyy", CultureInfo.InvariantCulture)).ToList()
+            : groups.OrderByDescending(g => g.TotalIn + g.TotalOut).ToList();
+    }
+
     private static (int score, string label) HealthScore(decimal savingsRate, decimal expenseRatio, int recurring, decimal closing)
     {
         var s = 50;
@@ -344,19 +371,30 @@ public partial class BankStatementService(IApplicationDbContext db, ILogger<Bank
         return ins;
     }
 
-    public async Task<BankTxnListDto> GetTransactionsAsync(
+    private IQueryable<Domain.Entities.BankTransaction> FilterTxns(
         Guid? accountId, string? category, string? direction, string? search,
-        DateOnly? from, DateOnly? to, int page, int pageSize, CancellationToken ct = default)
+        string? merchant, string? paymentMethod, DateOnly? from, DateOnly? to)
     {
         var q = db.BankTransactions.AsNoTracking().AsQueryable();
         if (accountId.HasValue) q = q.Where(t => t.BankAccountId == accountId.Value);
         if (!string.IsNullOrWhiteSpace(category)) q = q.Where(t => t.Category == category);
         if (!string.IsNullOrWhiteSpace(direction)) q = q.Where(t => t.Direction == direction);
+        if (!string.IsNullOrWhiteSpace(merchant)) q = q.Where(t => t.Merchant == merchant);
+        if (!string.IsNullOrWhiteSpace(paymentMethod)) q = q.Where(t => t.PaymentMethod == paymentMethod);
         if (from.HasValue) q = q.Where(t => t.TxnDate >= from.Value);
         if (to.HasValue) q = q.Where(t => t.TxnDate <= to.Value);
         if (!string.IsNullOrWhiteSpace(search))
             q = q.Where(t => t.Narration.ToLower().Contains(search.ToLower())
                           || (t.Merchant != null && t.Merchant.ToLower().Contains(search.ToLower())));
+        return q;
+    }
+
+    public async Task<BankTxnListDto> GetTransactionsAsync(
+        Guid? accountId, string? category, string? direction, string? search,
+        string? merchant, string? paymentMethod,
+        DateOnly? from, DateOnly? to, int page, int pageSize, CancellationToken ct = default)
+    {
+        var q = FilterTxns(accountId, category, direction, search, merchant, paymentMethod, from, to);
 
         var total = await q.CountAsync(ct);
         var totalIn = await q.SumAsync(t => (decimal?)t.Deposit, ct) ?? 0;

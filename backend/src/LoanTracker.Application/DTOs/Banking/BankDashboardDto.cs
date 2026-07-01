@@ -31,6 +31,8 @@ public record BankTxnListDto(
     IReadOnlyList<TxnLineDto> Items, int TotalCount, int Page, int PageSize,
     decimal TotalIn, decimal TotalOut);
 
+public record GroupSummaryDto(string Key, int Count, decimal TotalIn, decimal TotalOut, decimal Net);
+
 public record BankDashboardDto(
     string? AccountNumber,
     string? AccountName,
