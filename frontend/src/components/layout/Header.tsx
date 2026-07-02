@@ -14,6 +14,8 @@ const PAGE_TITLES: Record<string, string> = {
   '/bank/report': 'Bank Report',
   '/bank/import': 'Import Statement',
   '/bank': 'Banking',
+  '/expenses/dashboard': 'Expense Dashboard',
+  '/expenses': 'Expenses',
   '/account': 'Account Settings',
 }
 

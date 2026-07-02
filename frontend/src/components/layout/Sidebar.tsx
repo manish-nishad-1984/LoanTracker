@@ -11,6 +11,8 @@ import {
   Landmark as BankIcon,
   FileUp,
   Table2 as TableIcon,
+  Receipt,
+  PieChart,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -24,6 +26,8 @@ const navItems = [
   { to: '/bank/dashboard', icon: BankIcon, label: 'Bank Dashboard' },
   { to: '/bank/report', icon: TableIcon, label: 'Bank Report' },
   { to: '/bank/import', icon: FileUp, label: 'Import Statement' },
+  { to: '/expenses/dashboard', icon: PieChart, label: 'Expense Dashboard' },
+  { to: '/expenses', icon: Receipt, label: 'Expenses' },
 ]
 
 export default function Sidebar() {

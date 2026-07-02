@@ -13,6 +13,8 @@ public interface IApplicationDbContext
     DbSet<User> Users { get; }
     DbSet<BankAccount> BankAccounts { get; }
     DbSet<BankTransaction> BankTransactions { get; }
+    DbSet<Expense> Expenses { get; }
+    DbSet<ExpenseAttachment> ExpenseAttachments { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

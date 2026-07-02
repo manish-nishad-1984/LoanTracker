@@ -10,6 +10,8 @@ import Account from '@/pages/Account'
 import BankImport from '@/pages/Bank/BankImport'
 import BankDashboard from '@/pages/Bank/BankDashboard'
 import BankReport from '@/pages/Bank/BankReport'
+import ExpenseList from '@/pages/Expenses/ExpenseList'
+import ExpenseDashboard from '@/pages/Expenses/ExpenseDashboard'
 import Login from '@/pages/Login'
 import { Toaster } from '@/components/ui/toaster'
 import { AuthProvider } from '@/contexts/AuthContext'
@@ -50,6 +52,8 @@ export default function App() {
             <Route path="bank/dashboard" element={<BankDashboard />} />
             <Route path="bank/report" element={<BankReport />} />
             <Route path="bank/import" element={<BankImport />} />
+            <Route path="expenses" element={<ExpenseList />} />
+            <Route path="expenses/dashboard" element={<ExpenseDashboard />} />
             <Route path="account" element={<Account />} />
           </Route>
         </Routes>

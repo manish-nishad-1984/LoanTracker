@@ -34,6 +34,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IBankStatementService, BankStatementService>();
+        services.AddScoped<IExpenseService, ExpenseService>();
 
         return services;
     }

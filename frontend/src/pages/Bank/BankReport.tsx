@@ -2,15 +2,19 @@ import { useState } from 'react'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import {
   Search, Filter, ArrowDownLeft, ArrowUpRight, ChevronLeft, ChevronRight,
-  ChevronDown, Download, Layers,
+  ChevronDown, Download, Layers, ReceiptText,
 } from 'lucide-react'
 import { bankApi } from '@/api/bank'
+import { expensesApi, EXPENSE_CATEGORIES } from '@/api/expenses'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { useToast } from '@/hooks/useToast'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import type { GroupSummary } from '@/types'
+import type { GroupSummary, TxnLine } from '@/types'
 
 const CATEGORIES = [
   'Salary', 'Interest', 'Refund', 'Cash Deposit', 'Investment', 'Transfer In', 'Other Income',
@@ -36,6 +40,7 @@ export default function BankReport() {
   const [to, setTo] = useState('')
   const [groupBy, setGroupBy] = useState('')
   const [page, setPage] = useState(1)
+  const [convertTxn, setConvertTxn] = useState<TxnLine | null>(null)
   const pageSize = 50
 
   const base = {
@@ -101,15 +106,75 @@ export default function BankReport() {
       </div>
 
       {groupBy
-        ? <GroupedView groupBy={groupBy} base={base} />
-        : <DetailView base={base} page={page} pageSize={pageSize} setPage={setPage} />}
+        ? <GroupedView groupBy={groupBy} base={base} onAddExpense={setConvertTxn} />
+        : <DetailView base={base} page={page} pageSize={pageSize} setPage={setPage} onAddExpense={setConvertTxn} />}
+
+      <Dialog open={!!convertTxn} onOpenChange={(o) => { if (!o) setConvertTxn(null) }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Save as Expense</DialogTitle></DialogHeader>
+          {convertTxn && <ConvertToExpense txn={convertTxn} onDone={() => setConvertTxn(null)} />}
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
+
+// ─────────── Convert a bank debit into an expense ───────────
+function ConvertToExpense({ txn, onDone }: { txn: TxnLine; onDone: () => void }) {
+  const { toast } = useToast()
+  const guess = EXPENSE_CATEGORIES.includes(txn.category) ? txn.category : 'Other'
+  const [category, setCategory] = useState(guess)
+  const [vendor, setVendor] = useState(txn.merchant ?? '')
+  const [notes, setNotes] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const save = async () => {
+    setSaving(true); setError(null)
+    try {
+      await expensesApi.fromTransaction({ transactionId: txn.id, category, vendor: vendor || undefined, notes: notes || undefined })
+      toast({ title: 'Added to expenses' })
+      onDone()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed')
+    } finally { setSaving(false) }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="rounded-md bg-slate-50 border px-3 py-2 text-sm">
+        <div className="flex justify-between"><span className="text-slate-500">Date</span><span>{formatDate(txn.date)}</span></div>
+        <div className="flex justify-between"><span className="text-slate-500">Amount</span><span className="font-semibold text-rose-700">{formatCurrency(txn.amount)}</span></div>
+        <div className="flex justify-between"><span className="text-slate-500">From bank</span><span className="max-w-[200px] truncate">{txn.narration}</span></div>
+      </div>
+      <div className="grid gap-1">
+        <Label>Category</Label>
+        <Select value={category} onValueChange={setCategory}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent className="max-h-64">{EXPENSE_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+      <div className="grid gap-1">
+        <Label>Vendor / Party</Label>
+        <Input value={vendor} onChange={(e) => setVendor(e.target.value)} placeholder="Who you paid" />
+      </div>
+      <div className="grid gap-1">
+        <Label>Notes</Label>
+        <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional" />
+      </div>
+      {error && <p className="text-xs text-destructive">{error}</p>}
+      <div className="flex justify-end gap-2 pt-1">
+        <Button variant="outline" onClick={onDone} disabled={saving}>Cancel</Button>
+        <Button onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Confirm & Add'}</Button>
+      </div>
     </div>
   )
 }
 
 // ─────────── Ungrouped detail grid ───────────
-function DetailView({ base, page, pageSize, setPage }: {
-  base: Record<string, string | undefined>; page: number; pageSize: number; setPage: (f: (p: number) => number) => void
+function DetailView({ base, page, pageSize, setPage, onAddExpense }: {
+  base: Record<string, string | undefined>; page: number; pageSize: number
+  setPage: (f: (p: number) => number) => void; onAddExpense: (t: TxnLine) => void
 }) {
   const params = { ...base, page, pageSize }
   const { data, isLoading } = useQuery({
@@ -124,7 +189,7 @@ function DetailView({ base, page, pageSize, setPage }: {
       <TotalsTiles inAmt={data?.totalIn ?? 0} outAmt={data?.totalOut ?? 0} count={data?.totalCount ?? 0} />
       <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
         <div className="overflow-x-auto">
-          <TxnTable rows={data?.items ?? []} loading={isLoading} />
+          <TxnTable rows={data?.items ?? []} loading={isLoading} onAddExpense={onAddExpense} />
         </div>
         <div className="flex items-center justify-between border-t border-slate-100 px-4 py-2.5 text-sm print:hidden">
           <span className="text-slate-500">Page {data?.page ?? 1} of {totalPages} · {data?.totalCount ?? 0} records</span>
@@ -139,7 +204,7 @@ function DetailView({ base, page, pageSize, setPage }: {
 }
 
 // ─────────── Grouped summary + drill-down ───────────
-function GroupedView({ groupBy, base }: { groupBy: string; base: Record<string, string | undefined> }) {
+function GroupedView({ groupBy, base, onAddExpense }: { groupBy: string; base: Record<string, string | undefined>; onAddExpense: (t: TxnLine) => void }) {
   const { data: groups, isLoading } = useQuery({
     queryKey: ['bank', 'summary', groupBy, base],
     queryFn: () => bankApi.getSummary({ groupBy, ...base }),
@@ -168,7 +233,7 @@ function GroupedView({ groupBy, base }: { groupBy: string; base: Record<string, 
           <tbody>
             {isLoading && <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-400">Loading…</td></tr>}
             {!isLoading && groups?.length === 0 && <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-400">No data.</td></tr>}
-            {groups?.map((g) => <GroupRow key={g.key} group={g} groupBy={groupBy} base={base} />)}
+            {groups?.map((g) => <GroupRow key={g.key} group={g} groupBy={groupBy} base={base} onAddExpense={onAddExpense} />)}
           </tbody>
           {groups && groups.length > 0 && (
             <tfoot>
@@ -188,7 +253,7 @@ function GroupedView({ groupBy, base }: { groupBy: string; base: Record<string, 
   )
 }
 
-function GroupRow({ group, groupBy, base }: { group: GroupSummary; groupBy: string; base: Record<string, string | undefined> }) {
+function GroupRow({ group, groupBy, base, onAddExpense }: { group: GroupSummary; groupBy: string; base: Record<string, string | undefined>; onAddExpense: (t: TxnLine) => void }) {
   const [open, setOpen] = useState(false)
 
   // Build the detail filter for this group on top of the global filters.
@@ -222,7 +287,7 @@ function GroupRow({ group, groupBy, base }: { group: GroupSummary; groupBy: stri
         <tr className="bg-slate-50/40">
           <td colSpan={6} className="px-4 py-3">
             <div className="rounded-md border border-slate-200 bg-white overflow-x-auto">
-              <TxnTable rows={data?.items ?? []} loading={isLoading} compact />
+              <TxnTable rows={data?.items ?? []} loading={isLoading} compact onAddExpense={onAddExpense} />
             </div>
           </td>
         </tr>
@@ -251,7 +316,10 @@ function TotalsTiles({ inAmt, outAmt, count }: { inAmt: number; outAmt: number; 
   )
 }
 
-function TxnTable({ rows, loading, compact }: { rows: import('@/types').TxnLine[]; loading: boolean; compact?: boolean }) {
+function TxnTable({ rows, loading, compact, onAddExpense }: {
+  rows: TxnLine[]; loading: boolean; compact?: boolean; onAddExpense?: (t: TxnLine) => void
+}) {
+  const cols = (compact ? 6 : 7) + (onAddExpense ? 1 : 0)
   return (
     <table className="w-full text-sm">
       <thead>
@@ -263,11 +331,12 @@ function TxnTable({ rows, loading, compact }: { rows: import('@/types').TxnLine[
           <th className="px-4 py-2 font-medium text-slate-500 text-xs uppercase tracking-wider">Method</th>
           <th className="px-4 py-2 font-medium text-slate-500 text-xs uppercase tracking-wider text-right">Out</th>
           <th className="px-4 py-2 font-medium text-slate-500 text-xs uppercase tracking-wider text-right">In</th>
+          {onAddExpense && <th className="px-4 py-2 print:hidden" />}
         </tr>
       </thead>
       <tbody>
-        {loading && <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-400">Loading…</td></tr>}
-        {!loading && rows.length === 0 && <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-400">No transactions.</td></tr>}
+        {loading && <tr><td colSpan={cols} className="px-4 py-8 text-center text-slate-400">Loading…</td></tr>}
+        {!loading && rows.length === 0 && <tr><td colSpan={cols} className="px-4 py-8 text-center text-slate-400">No transactions.</td></tr>}
         {rows.map((t) => (
           <tr key={t.id} className="border-b border-slate-100 hover:bg-slate-50/60">
             <td className="px-4 py-2 whitespace-nowrap text-slate-700">{formatDate(t.date)}</td>
@@ -277,6 +346,15 @@ function TxnTable({ rows, loading, compact }: { rows: import('@/types').TxnLine[
             <td className="px-4 py-2 text-slate-500 text-xs">{t.paymentMethod}</td>
             <td className="px-4 py-2 text-right tabular-nums text-rose-700">{t.direction === 'Out' ? formatCurrency(t.amount) : '—'}</td>
             <td className="px-4 py-2 text-right tabular-nums text-emerald-700">{t.direction === 'In' ? formatCurrency(t.amount) : '—'}</td>
+            {onAddExpense && (
+              <td className="px-3 py-2 text-right print:hidden">
+                {t.direction === 'Out' && (
+                  <Button variant="ghost" size="sm" className="h-7 text-blue-700" title="Save as expense" onClick={() => onAddExpense(t)}>
+                    <ReceiptText className="h-3.5 w-3.5" /> Expense
+                  </Button>
+                )}
+              </td>
+            )}
           </tr>
         ))}
       </tbody>

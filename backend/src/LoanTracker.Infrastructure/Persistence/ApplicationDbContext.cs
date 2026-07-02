@@ -16,6 +16,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<User> Users => Set<User>();
     public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
     public DbSet<BankTransaction> BankTransactions => Set<BankTransaction>();
+    public DbSet<Expense> Expenses => Set<Expense>();
+    public DbSet<ExpenseAttachment> ExpenseAttachments => Set<ExpenseAttachment>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -29,10 +31,13 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         modelBuilder.ApplyConfiguration(new UserConfiguration());
         modelBuilder.ApplyConfiguration(new BankAccountConfiguration());
         modelBuilder.ApplyConfiguration(new BankTransactionConfiguration());
+        modelBuilder.ApplyConfiguration(new ExpenseConfiguration());
+        modelBuilder.ApplyConfiguration(new ExpenseAttachmentConfiguration());
 
         // Global soft-delete filter for Lender and Loan
         modelBuilder.Entity<Lender>().HasQueryFilter(e => e.DeletedAt == null);
         modelBuilder.Entity<Loan>().HasQueryFilter(e => e.DeletedAt == null);
+        modelBuilder.Entity<Expense>().HasQueryFilter(e => e.DeletedAt == null);
 
         // Global filter for non-deleted payments
         modelBuilder.Entity<LoanPayment>().HasQueryFilter(e => !e.IsDeleted);

@@ -2,6 +2,7 @@ using System.Text;
 using FluentValidation;
 using LoanTracker.Api.Middleware;
 using LoanTracker.Application.DTOs.Auth;
+using LoanTracker.Application.DTOs.Expenses;
 using LoanTracker.Application.DTOs.Lenders;
 using LoanTracker.Application.DTOs.Loans;
 using LoanTracker.Application.DTOs.Payments;
@@ -54,6 +55,8 @@ builder.Services.AddScoped<IValidator<UpdatePaymentRequest>, UpdatePaymentValida
 builder.Services.AddScoped<IValidator<LoginRequest>, LoginValidator>();
 builder.Services.AddScoped<IValidator<ChangePasswordRequest>, ChangePasswordValidator>();
 builder.Services.AddScoped<IValidator<UpdateAccountRequest>, UpdateAccountValidator>();
+builder.Services.AddScoped<IValidator<CreateExpenseRequest>, CreateExpenseValidator>();
+builder.Services.AddScoped<IValidator<UpdateExpenseRequest>, UpdateExpenseValidator>();
 
 // ── JWT authentication ───────────────────────────────────────
 var jwtKey = builder.Configuration["Jwt:Key"]

@@ -413,6 +413,71 @@ export interface GroupSummary {
   net: number
 }
 
+// ─── Expenses ─────────────────────────────────────────────────────────────────
+
+export interface Attachment {
+  id: string
+  fileName: string
+  contentType: string
+  kind: string
+  sizeBytes: number
+}
+
+export interface Expense {
+  id: string
+  date: string
+  title: string
+  category: string
+  amount: number
+  paymentMethod: string | null
+  vendor: string | null
+  notes: string | null
+  source: string
+  sourceReference: string | null
+  createdAt: string
+  attachments: Attachment[]
+}
+
+export interface ExpenseListItem {
+  id: string
+  date: string
+  title: string
+  category: string
+  amount: number
+  paymentMethod: string | null
+  vendor: string | null
+  source: string
+  attachmentCount: number
+}
+
+export interface ExpenseCategoryStat { category: string; total: number; percentage: number; count: number }
+export interface ExpenseMonthly { year: number; month: number; monthName: string; total: number; count: number }
+
+export interface ExpenseSummary {
+  fromDate: string | null
+  toDate: string | null
+  total: number
+  count: number
+  averagePerDay: number
+  averagePerExpense: number
+  thisMonth: number
+  lastMonth: number
+  topCategory: string | null
+  byCategory: ExpenseCategoryStat[]
+  monthly: ExpenseMonthly[]
+  recent: ExpenseListItem[]
+}
+
+export interface CreateExpenseRequest {
+  date: string
+  title: string
+  category: string
+  amount: number
+  paymentMethod?: string
+  vendor?: string
+  notes?: string
+}
+
 export interface BankDashboard {
   accountNumber: string | null
   accountName: string | null
